@@ -1,0 +1,146 @@
+table.data-table {
+	width:100%;
+}
+
+table.data-table tbody {
+	border:none;
+}
+
+table.data-table tr td, table.data-table tr th {
+	font-size:0.8em;
+	border:none;
+	padding:5px;
+}
+
+table.data-table tr {
+	border-bottom:1px dotted #888;
+	height:8px;
+}
+
+table.data-table tr:last-child {
+	border-bottom:none;
+}
+
+table.data-table tr:hover {
+	background-color:#fafafa;
+}
+
+table.data-table tr td {
+	height:8px;
+}
+
+table.data-table tr td.number {
+	text-align:right;
+}
+
+.hover-row td {
+	color:red;
+}
+
+div.row-block {
+	width:100%;
+	height:350px;
+	padding:0;
+	margin:0;
+	margin-top:18px;
+}
+
+div.block-cell {
+	vertical-align:top;
+	display:inline-block;
+	border-radius: 5px;
+	height:97%;
+	width:100%;
+	border:1px solid #ccc;
+	margin:5px 0 5px 0;
+	margin-left:23px;
+}
+
+div.block-cell.full {
+	width:96%;
+}
+
+div.block-cell.half {
+	width:46.8%;
+}
+
+div.block-cell.one-third {
+	width:30.5%;
+	margin-left:22px;
+}
+
+div.two-third {
+	width:63.2%;
+}
+
+div.block-header, div.block-content {
+	padding:4px;
+}
+
+div.block-header {
+	background-color:#eee;
+	width:100%;
+	height:35px;
+	padding-top:8px;
+	text-align:center;
+	font-weight:bold;
+	color:#555;
+}
+
+div.block-content {
+	padding:2px;
+	vertical-align:top;
+}
+
+div.block-subscript {
+	font-size:25px;
+	text-align:center;
+}
+
+div.block-info {
+	font-size:12px;
+	margin: 5px 35px 5px 35px;
+	line-height:1.5em;
+}
+
+div.block-info.normal-right-aligned {
+	display:inline-block;
+	color:red;
+	font-size:12px;
+	margin: 5px 35px 5px 35px;
+	line-height:1.5em;
+}
+
+div.block-content h1, h2, h3 {
+	margin-top: 0;
+	margin-bottom: 1px;
+}
+	
+
+	
+div.block-content.big-simple-central {
+	text-align:center;
+	font-size:55px;
+	font-weight:bold;
+	margin: 35px 0 10px 0;
+	color:#900;
+}
+
+div.block-content.simple-central {
+	text-align:center;
+	margin: 10px 0 10px 0;
+}
+	
+div.block-info.big-simple-central {
+	font-size:14px;
+	margin: 25px 35px 5px 35px;
+	line-height:1.5em;
+}
+
+div.block-info.normal-central{
+	text-align:center;
+	display:inline-block;
+	font-size:12px;
+	margin: 5px 10px 5px 10px;
+	line-height:1.5em;
+}

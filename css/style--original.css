@@ -1,0 +1,152 @@
+body {
+	font-family:consolas;
+	font-size:13px;
+}
+
+h1 {
+	font-size:2.5em;
+}
+
+a {
+	text-decoration:none;
+}
+
+a:hover {
+	text-decoration:underline;
+}
+
+.main-title {
+	height:120px;
+	padding-top:5px;
+}
+
+.logo {
+	float:left;
+	height:100px;
+}
+
+table {
+	border:1px solid #000;
+	margin-bottom:10px;
+	border-radius: 5px;
+    background: #e7ffe7;
+    padding: 10px;
+    width: 400px;
+    min-height: 150px; 
+}
+
+table.no-color {
+    background: none;
+}
+
+tr:hover {
+	background: #c1ffc1;
+}
+
+tr:hover th {
+	background: #e7ffe7;
+}
+
+td.pie:hover {
+	background: #e7ffe7;
+}
+
+tr.invisible {
+	display:none;
+}
+
+table.no-color tr:hover {
+    background: none;
+}
+
+
+.wide-table {
+	width: 820px;
+}
+
+td.number {
+	text-align:right;
+}
+
+td.pie {
+	text-align:center;
+}
+
+.single-number-table tr td:not(.info) {
+	text-align:center;
+	font-size:2em;
+}
+
+.normal-table {
+}
+
+.double-table tr.main-item td {
+/*	text-align:center;*/
+}
+
+.double-table tr td span.main-item  {
+	text-decoration:underline;	
+}
+
+.double-table tr.sub-item {
+	font-size:0.85em;
+}
+
+.double-table tr.sub-item td {
+	padding-left:5px;
+}
+
+div.left-float {
+	padding: 10px;
+	float:left;
+}
+
+#aggSpecimenCountPerCountryNotNL {
+	width: 600px; 
+	height: 400px;
+	padding-left:100px;
+}
+
+.toggle {
+	cursor:pointer;
+}
+
+.toggle:hover {
+	font-style:italic;
+}
+
+#netherlands-map {
+	height:400px;
+}
+
+div.full-width {
+	width:1220px;
+	text-align:center;
+	margin:0 10px 0 10px;
+}
+
+div.half-width {
+	float:left;
+	width:595px;
+	text-align:center;
+	margin:0 0 5px 10px;
+}
+
+
+div.text-block {
+	font-size:0.9em;
+	border:1px solid #000;
+	border-radius: 5px;
+    padding: 10px;
+}
+
+.info {
+	text-align:center;
+	font-size:0.8em;
+	color:#666;	
+}
+
+.info.secondary {
+	font-size:0.7em;
+}
+
