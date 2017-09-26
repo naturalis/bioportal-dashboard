@@ -188,6 +188,8 @@
 
 			$this->queries->specimen_prepTypePerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": { }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 }, "aggs": { "prepTypes": { "terms" : { "field" : "preparationType","size": 100 } } } } } }');
 			$this->queries->specimen_noPrepTypePerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0,  "query": { "bool": { "must_not": [ { "exists": { "field": "preparationType" } } ] } }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
+			$this->queries->specimen_kindOfUnitPerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": { }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 }, "aggs": { "kindsOfUnit": { "terms" : { "field" : "kindOfUnit","size": 100 } } } } } }');
+			$this->queries->specimen_noKindOfUnitPerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0,  "query": { "bool": { "must_not": [ { "exists": { "field": "kindOfUnit" } } ] } }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
 			$this->queries->specimen_perCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": { }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
 
 //			$this->queries->storage_sumAll_withIndivCount=$this->makeQueryObject($this->services->storageunits, '{ "query": { "exists" : { "field" : "individualCount" } }, "aggs" : { "indiv_count" : { "sum" : { "field" : "individualCount" } } } }');
@@ -259,6 +261,9 @@
 			if ($this->nds->isHandleRegistered( "storage_docCountPerColl_withoutIndivCount" )) $this->data->storage_docCountPerColl_withoutIndivCount = $this->nds->resultGetAggregations( "storage_docCountPerColl_withoutIndivCount" );
 			if ($this->nds->isHandleRegistered( "specimen_prepTypePerCollection" )) $this->data->specimen_prepTypePerCollection = $this->nds->resultGetAggregations( "specimen_prepTypePerCollection" );
 			if ($this->nds->isHandleRegistered( "specimen_noPrepTypePerCollection" )) $this->data->specimen_noPrepTypePerCollection = $this->nds->resultGetAggregations( "specimen_noPrepTypePerCollection" );
+			if ($this->nds->isHandleRegistered( "specimen_kindOfUnitPerCollection" )) $this->data->specimen_kindOfUnitPerCollection = $this->nds->resultGetAggregations( "specimen_kindOfUnitPerCollection" );
+			if ($this->nds->isHandleRegistered( "specimen_noKindOfUnitPerCollection" )) $this->data->specimen_noKindOfUnitPerCollection = $this->nds->resultGetAggregations( "specimen_noKindOfUnitPerCollection" );
+
 			if ($this->nds->isHandleRegistered( "specimen_perCollection" )) $this->data->specimen_perCollection = $this->nds->resultGetAggregations( "specimen_perCollection" );
 			if ($this->nds->isHandleRegistered( "storage_catNumberCardinality" )) $this->data->storage_catNumberCardinality = $this->nds->resultGetAggregations( "storage_catNumberCardinality" );
 

@@ -439,7 +439,8 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, '_other' => 1.05, 'nesten' => 3.13 ],
 					'categoryToPreservation' => [
 						'nat' => [ 'alcohol', 'wet specimen', 'alcohol 96%' ],
-						'droog' => [ 'air dried', 'study skin', 'mounted skin', 'skeletonized', 'microscopic slide', 'not applicable', 'loose bones', 'box', 'flat skin', 'mounted skeleton', 'mummified specimen', 'head', 'check nummer', 'kop', 'wing', 'cast', 'claws', 'skull', 'wings', 'tube', 'bill', 'case mount', 'head & leg', 'head & tail', 'mounted``', 'skin & win', 'tail', 'wing & tai' ]
+						'droog' => [ 'nest','air dried', 'study skin', 'mounted skin', 'skeletonized', 'microscopic slide', 'not applicable', 'loose bones', 'box', 'flat skin', 'mounted skeleton', 'mummified specimen', 'head', 'check nummer', 'kop', 'wing', 'cast', 'claws', 'skull', 'wings', 'tube', 'bill', 'case mount', 'head & leg', 'head & tail', 'mounted``', 'skin & win', 'tail', 'wing & tai' ],
+						'nesten' => [ 'nest' ]
 					]
 				],
 				'invertebrates' => [
