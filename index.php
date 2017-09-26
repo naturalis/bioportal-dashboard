@@ -22,6 +22,15 @@
 			something useful that can be expressed in a radar plot (because they are cool)
 	*/
 	
+	function q( $d, $die=false ) 
+	{
+		echo'<pre>';
+		print_r( $d );
+		echo'</pre>';
+		if ($die) die();
+	}
+	
+	
 	include_once("classes/class.ndsInterface.php");
 	include_once("classes/class.ndsDataHarverster.php");
 	include_once("classes/class.dataCache.php");
@@ -90,7 +99,6 @@
 	$collectionUnitEstimator->setStorageSumPerCollWithoutIndivCount( $data->storage_docCountPerColl_withoutIndivCount['collections']['buckets'] );
 	$collectionUnitEstimator->setLowerPlantsNumberFromBRAHMS( 13527 );
 	$collectionUnitEstimator->calculateStorageRecordsWithoutIndividualCount();
-	
 	$collectionUnitEstimator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection['collections']['buckets'] );
 	$collectionUnitEstimator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection['collections']['buckets'] );
 	$collectionUnitEstimator->normalizeSpecimenPrepTypes();
@@ -105,9 +113,10 @@
 	
 	$collectionUnitEstimates=$collectionUnitEstimator->getCollectionUnitEstimates();
 	$grandUnitsTotal=$collectionUnitEstimator->getGrandUnitsTotal();
+	
+	$collectionUnitEstimator->sortCategoryBuckets();
+	$categoryBuckets=$collectionUnitEstimator->getCategoryBuckets();
 
-	
-	
 	ob_start();
 
 ?>
@@ -152,30 +161,41 @@ var colors=[];
 	);
 
 	echo $c->getBlockRow();
+	
+	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	$buffer=[];
-	$buffer[]='<div style="display:inline-block;"><table id="specimen_perCollectionTypeTable" class="data-table" style="width:325px;">';
+	$buffer[]='<div style="display:inline-block;"><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 	
-	foreach((array)$data->specimen_perCollectionType['collectionType']['buckets'] as $key=>$bucket)
+	$i=0;
+	foreach((array)$categoryBuckets as $key=>$bucket)
 	{
-		if ($key>9) break;
-		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( $bucket['key'] ) . '</td><td class="number">' .formatNumber( $bucket['doc_count'] ) 	. '</td></tr>';
+		if ($i++==9)
+		{
+			$buffer[] = '</table><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
+		}
+		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . '</td><td class="number">' .formatNumber( $bucket['totalUnit_sum'] ) . '</td></tr>';
 	}
 	
 	$buffer[]='</table></div>';
 
-	//$buffer[]='<div class="chart-container" style="position: relative; height:60vh;width:33vw;margin-top:5px"><canvas id="specimen_perCollectionType"></canvas></div>';
 	$buffer[]='<div style="display:inline-block;vertical-align:top;margin:5px 0 0 50px;"><canvas style="width:289px;height:289px;" id="specimen_perCollectionTypeChart"></canvas></div>';
 	
 	$c->makeBlock(
-		[ "cell" => CLASS_TWO_THIRD, "info" => "normal-right-aligned" ],
-		[ "title" => __("Top 10 collections by specimen count"), "main" => implode("\n",$buffer) ]
+		[ "cell" => CLASS_FULL, "info" => "normal-right-aligned" ],
+		[ "title" => __("Collection categories by object count"), "main" => implode("\n",$buffer) ]
 	);
 	
 	/* ------------------------------------------------------------------------------------------------------------------------ */
 
+
+	echo $c->getBlockRow();	
+
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
 
 	$buffer=[];
 	$buffer[]='<div style="display:inline-block;margin-bottom:-25px;"><table id="taxon_groupByRank" class="data-table" style="width:325px;">';
@@ -192,9 +212,7 @@ var colors=[];
 		[ "title" => __("Number of taxa per rank"), "main" => implode("\n",$buffer), "info" => __( "Breakdown of taxa per rank in the taxon index. The index does not contain individual records for higher taxa." )  ]
 	);
 
-
-	echo $c->getBlockRow();	
-
+	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
@@ -219,24 +237,15 @@ var colors=[];
 		[ "title" => __("Name count"), "main" => implode("\n", $buffer), "info" => "Numbers of unique names in the NBA taxon index" ]
 	);
 
+	/*
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[ "title" => __("titles"), "main" => "SOME GRAPH HERE", "subscript" => __("datas"), "info" => __("infos") ]
 	);
+	*/
 
 	echo $c->getBlockRow();
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-	
-	
-
-	
-
-
-
-	
-	
-	echo $c->getBlockRow();
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -455,7 +464,7 @@ String.prototype.reverse = function() {
 	return o;
 }	
 
-var defaultColors=["#4a2c83","#77db50","#6d45cf","#d2d43e","#ca47d0","#539943","#db397b","#6fd5a9","#d9452d","#6b7ed2","#d5913c","#b861b5","#c9db89","#4b2451","#8b893a","#cfa4ce","#446748","#ba5e7c","#81bed0","#bf5b48","#5c6987","#d0b59c","#302d2b","#835e3e","#67252b"];
+var defaultColors=['#51574a','#8e8c6d','#e2975d','#c94a53','#993767','#9163b6','#7c9fb0','#447c69','#e4bf80','#f19670','#be5168','#65387d','#e279a3','#5698c4','#74c493','#e9d78e','#e16552','#a34974','#4e2472','#e0598b','#9abf88'];
 
 $(document).ready(function(e)
 {
@@ -465,13 +474,12 @@ $(document).ready(function(e)
 	
 <?php
 
-	foreach((array)$data->specimen_perCollectionType['collectionType']['buckets'] as $key=>$bucket)
+	$i=0;
+	foreach((array)$categoryBuckets as $key=>$bucket)
 	{
-		//if ($bucket['key']=="Botany") continue;
-		//if ($key>15) break;
-		echo "specimen_perCollectionTypeData.data.push('" . $bucket['doc_count']. "');\n";
-		echo "specimen_perCollectionTypeData.colors.push(defaultColors[".$key."]);\n";
-		echo "specimen_perCollectionTypeData.labels.push('" . $bucket['key'] . "');\n";
+		echo "specimen_perCollectionTypeData.data.push('" . $bucket['totalUnit_sum']. "');\n";
+		echo "specimen_perCollectionTypeData.colors.push(defaultColors[".$i++."]);\n";
+		echo "specimen_perCollectionTypeData.labels.push('" . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . "');\n";
 	}
 
 ?>

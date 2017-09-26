@@ -224,6 +224,14 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			}
 			return $this->collectionUnitEstimates;
 		}
+
+		public function sortCategoryBuckets( $field='totalUnit_sum', $dir='desc')
+		{
+			uasort ($this->collectionUnitEstimates, function ($a, $b) use ($field,$dir)
+			{
+			   return ($dir!='desc' ? 1 : -1) * ($a[$field] - $b[$field]);
+			});
+		}
 		
 		public function getGrandUnitsTotal()
 		{
@@ -233,6 +241,11 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				$grandTotal += $val['totalUnit_sum'];
 			}
 			return $grandTotal;
+		}
+		
+		public function getCategoryBuckets()
+		{
+			return $this->getCollectionUnitEstimates();
 		}
 		
 		public function addStaticNumbers( $key, $numbers )
@@ -278,6 +291,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				if (!isset($this->collectionUnitEstimates[$category]))
 				{
 					$this->collectionUnitEstimates[$category]=$this->initSumObject();
+					$this->collectionUnitEstimates[$category]['label']=$this->mapping2016ReportCategoryToCollection[$category]['label'];
 				}
 			}
 		}
@@ -368,15 +382,18 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		{
 			$this->mapping2016ReportCategoryToCollection=[
 				'botanie hoge planten' => [
+					'label' => 'Hogere planten',
 					'mapping' => [ 'botany' ],
 					'collectionEstimatesSpecimen' => [ '_other' => 1  ],
 					'categoryToPreservation' => [ ],
 				],
 				'botanie lage planten' =>  [
+					'label' => 'Lagere planten',
 					'mapping' => [ 'lagere planten' ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 40.30 ],
 				],
 				'entomologie' => [
+					'label' => 'Entomologie',
 					'mapping' => [ 'entomology','lepidoptera','hymenoptera','remaining insects','coleoptera','diptera','diptera0','orthopteroidea','odonata','hemiptera','entomologyhyj','collembola'],
 					'collectionEstimatesStorageUnits' => [ 'drawer' => 145.98, 'jar' => 1031, 'box' => 83.42, '_other' => 218.73 ],
 					'categoryToPreservation' => [
@@ -385,11 +402,13 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					]
 				],
 				'vertebraten' => [
+					'label' => 'Overige vertebraten',
 					'mapping' => [ 'vertebrates' ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
 					'categoryToPreservation' => [ 'droog' => [ 'loose bones' ] ]
 				],
 				'vertebraten zoogdieren' => [
+					'label' => 'Zoogdieren',
 					'mapping' => [ 'mammalia' ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.23, 'nat' => 1.20 ],
 					'categoryToPreservation' => [
@@ -399,6 +418,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					]
 				],
 				'vertebraten reptielen en amfibieën' =>  [
+					'label' => 'Reptielen en amfibieën',
 					'mapping' => [ 'amphibia and reptilia' ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.18, 'nat' => 1.79 ],
 					'categoryToPreservation' => [
@@ -408,11 +428,13 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					]
 				],
 				'vertebraten vissen' => [
+					'label' => 'Vissen',
 					'mapping' => [ 'pisces' ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.00, 'nat' => 1.00 ],
 					'categoryToPreservation' => [ 'droog' => [ 'air dried' ] ]
 				],
 				'vertebraten vogels' => [
+					'label' => 'Vogels',
 					'mapping' => [ 'aves' ],
 					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, '_other' => 1.05, 'nesten' => 3.13 ],
 					'categoryToPreservation' => [
@@ -421,11 +443,13 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					]
 				],
 				'invertebrates' => [
+					'label' => 'Invertebrates collectie',
 					'mapping' => [ 'invertebrates' ],
 					'collectionEstimatesStorageUnits' => [ 'drawer' => 73.00, 'alcohol' => 6.96, '_other' => 1.00 ],
 					'categoryToPreservation' => [ 'nat' => [ 'alcohol', 'alcohol 70%' ], 'droog' => [ 'microscopic slide', 'box', 'air dried' ] ]
 				],
 				'evertebraten overige collecties' => [
+					'label' => 'Evertebraten',
 					'mapping' => [ 'crustacea','cnidaria','echinodermata','porifera','vermes','hydrozoa','chelicerata and myriapoda','tunicata','bryozoa','brachiopoda','foraminifera','protozoa'],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ '_other' => 4,08 ],
@@ -436,18 +460,21 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					]
 				],
 				'evertebraten mollusca' => [
+					'label' => 'Mollusca',
 					'mapping' => [ 'mollusca'],
 					'collectionEstimatesStorageUnits' => [ 'slide drawer' => 26.71, 'alcohol' => 8.38, '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ '_other' => 11.70 ],
 					'categoryToPreservation' => [ 'nat' => [ 'alcohol 70%', 'alcohol 96%', 'formalin' ], 'droog' => [ 'air dried', 'not applicable', 'fossilized', 'microscopic slide', 'semstub' ] ]
 				],
 				'paleontologie' => [
+					'label' => 'Paleontologie',
 					'mapping' => [ 'paleobotany','paleontology vertebrates','paleontology invertebrates','paleontology','macro vertebrates','micro vertebrates','mesozoic invertebrates','micropaleontology','cainozoic mollusca'],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ '_other' => 12.64 ],
 					'categoryToPreservation' => [ 'droog' => [ 'fossilized', 'not applicable', 'peel', 'fossilized', 'fossilized specimen', 'air dried', 'unknown', 'microscopic slide', 'fossilized specimen', 'box' ] ]
 				],
 				'mineralogie en petrologie' => [
+					'label' => 'Mineralogie en petrologie',
 					'mapping' => [  'mineralogy','petrology','mineralogy and petrology' ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ 'preparaten' => 1.00,'monsters' => 1.57,'nog te migreren' => 1.00, '_other' => 1.27 ],

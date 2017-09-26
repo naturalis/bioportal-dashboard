@@ -162,7 +162,6 @@
 
 		private function initQueries()
 		{
-
 			$this->queries->specimen_totalCount=$this->makeQueryObject($this->services->specimen, '{}');
 			$this->queries->taxon_totalCount=$this->makeQueryObject($this->services->taxon, '{}');
 			$this->queries->multimedia_totalCount=$this->makeQueryObject($this->services->multimedia, '{}');
@@ -186,6 +185,7 @@
 //			$this->queries->specimen_countPerCountry_NotNL=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must_not": [ { "terms": { "gatheringEvent.country": [ %DUTCHLANDS% "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.country", "size" : 100 } } }}');
 			$this->queries->specimen_countPerCountry_NotNL=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must_not": [ { "terms": { "gatheringEvent.country": [ "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.country", "size" : 100 } } }}');
 			$this->queries->specimen_countPerProvince_NL=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must": [ { "terms": { "gatheringEvent.country": [ %DUTCHLANDS% "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.provinceState"} } }}');
+
 			$this->queries->specimen_prepTypePerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": { }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 }, "aggs": { "prepTypes": { "terms" : { "field" : "preparationType","size": 100 } } } } } }');
 			$this->queries->specimen_noPrepTypePerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0,  "query": { "bool": { "must_not": [ { "exists": { "field": "preparationType" } } ] } }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
 			$this->queries->specimen_perCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": { }, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
@@ -195,8 +195,6 @@
 			$this->queries->storage_docCountPerColl_withoutIndivCount=$this->makeQueryObject($this->services->storageunits, '{ "query": { "bool": { "must_not": [ { "exists": { "field": "individualCount" } } ] } }, "aggs" : { "collections" : { "terms" : { "field" : "INST_COLL_SUBCOLL.keyword","size": 100 }, "aggs": { "sum_count": { "terms" : { "field" : "Mount.keyword","size": 100 } } } } } }');
 			$this->queries->storage_catNumberCardinality=$this->makeQueryObject($this->services->storageunits, '{ "size": 0, "aggs" : { "catalogNumber_count" : { "cardinality" : { "field" : "catalogNumber.keyword" } } } }');
 
-			
-			
 			foreach($this->queries as $key=>$obj)
 			{
 				$d = $obj->query;

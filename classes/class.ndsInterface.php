@@ -219,6 +219,7 @@
 			{
 				$this->queryQueue[$key]["response"]=curl_multi_getcontent($val["cUrlHandle"]);
 				curl_multi_remove_handle($mh, $val["cUrlHandle"]);
+				//print_r($this->queryQueue[$key]["response"]);
 			}
 
 			curl_multi_close($mh);
