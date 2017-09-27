@@ -101,13 +101,33 @@
 	$collectionUnitEstimator->calculateStorageRecordsWithoutIndividualCount();
 	$collectionUnitEstimator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection['collections']['buckets'] );
 	$collectionUnitEstimator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection['collections']['buckets'] );
-	$collectionUnitEstimator->normalizeSpecimenPrepTypes();
+	
+	$collectionUnitEstimator->setSpecimenKindOfUnitPerCollection( $data->specimen_kindOfUnitPerCollection['collections']['buckets'] );
+	
+	
+	$collectionUnitEstimator->normalizeSpecimenPreparationTypes();
 	$collectionUnitEstimator->calculatSpecimenCount();
 	
+	/*
+	
+		vaste getallen harmoniseren!
+	
+	*/
+	
+	
+    $collectionUnitEstimator->addStaticNumbers( '2D materiaal', [ 'specimenUnit_count' => 625500, 'specimenUnit_sum_estimate' => 625500 ] );
+
+    // still in legacy database:
+    $collectionUnitEstimator->addStaticNumbers( 'vertebraten vissen', [ 'specimenUnit_count' => 116000, 'specimenUnit_sum_estimate' => 116000 ] );
+	
+	
 	// not in NBA:
-	$collectionUnitEstimator->addStaticNumbers( '2D materiaal', [ 'specimenUnit_count'=>625500, 'specimenUnit_sum_estimate'=>625500] );
+	//$collectionUnitEstimator->addStaticNumbers( '2D materiaal', [ 'specimenUnit_count' => 625500 - dyna(2449), avg=1, 'specimenUnit_sum_estimate' => 625500 ] );
 	// still in legacy database:
-	$collectionUnitEstimator->addStaticNumbers( 'vertebraten vissen', [ 'specimenUnit_count'=>116000, 'specimenUnit_sum_estimate'=>116000] );
+	//$collectionUnitEstimator->addStaticNumbers( 'vertebraten vissen', [ 'specimenUnit_count' => 116000, 'specimenUnit_sum_estimate' => 116000 ] );  Pisces 'nog te migreren'
+	
+//	$collectionUnitEstimator->addStaticNumbers( 'NOG TE MIGREREN STENEN: mineralogy and petrology, 'nog te migreren', 100.000 );
+//	$collectionUnitEstimator->addStaticNumbers( 'DISCARDED DURING ETL: mineralogy and petrology, 'thin section', 199.000 );
 	
 	$collectionUnitEstimator->roundEstimates();
 	

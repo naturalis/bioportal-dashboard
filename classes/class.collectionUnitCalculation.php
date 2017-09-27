@@ -28,6 +28,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		private $storage_docCountPerColl_withoutIndivCount;
 		private $specimen_prepTypePerCollection;
 		private $specimen_noPrepTypePerCollection;
+		private $specimen_kindOfUnitPerCollection;
 		private $normalizedSpecimen;
 		
 		public function __construct()
@@ -119,10 +120,70 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		{
 			$this->specimen_noPrepTypePerCollection = $data;
 		}
-		
-		public function normalizeSpecimenPrepTypes()
+
+		public function setSpecimenKindOfUnitPerCollection( $data )
 		{
-			$this->normalizedSpecimen=$this->normalizePrepTypes( $this->specimen_prepTypePerCollection,  $this->specimen_noPrepTypePerCollection );
+			$this->specimen_kindOfUnitPerCollection = $data;
+		}
+		
+		public function normalizeSpecimenPreparationTypes()
+		{
+			$this->normalizedSpecimen=[];
+			foreach( (array)$this->specimen_prepTypePerCollection as $bucket )
+			{
+				if ($bucket['key']=="Aves") continue; // Aves is counted by kindOfUnit
+				
+				$this->normalizedSpecimen[$bucket['key']]=[];
+				if (isset($bucket['prepTypes']))
+				{
+					$boxes=$drawers=0;
+					foreach( $bucket['prepTypes']['buckets'] as $subBucket )
+					{
+						$b=strtolower($subBucket['key']);
+						if (!isset($this->normalizedSpecimen[$bucket['key']][$b]))
+						{
+							$this->normalizedSpecimen[$bucket['key']][$b]=(int)$subBucket['doc_count'];
+						}
+						else
+						{
+							$this->normalizedSpecimen[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
+						}
+					}
+						
+				}
+			}
+
+			if (!is_null($this->specimen_noPrepTypePerCollection)) 
+			{
+				foreach( (array)$this->specimen_noPrepTypePerCollection as $bucket )
+				{
+					if (!isset($this->normalizedSpecimen[$bucket['key']])) $this->normalizedSpecimen[$bucket['key']]=[];
+					$this->normalizedSpecimen[$bucket['key']]['_other']=(int)$bucket['doc_count'];
+				}
+			}
+
+			foreach( (array)$this->specimen_kindOfUnitPerCollection as $bucket )
+			{
+				if ($bucket['key']!="Aves") continue; // only Aves is counted by kindOfUnit
+				
+				$this->normalizedSpecimen[$bucket['key']]=[];
+				if (isset($bucket['kindsOfUnit']))
+				{
+					$boxes=$drawers=0;
+					foreach( $bucket['kindsOfUnit']['buckets'] as $subBucket )
+					{
+						$b=strtolower($subBucket['key']);
+						if (!isset($this->normalizedSpecimen[$bucket['key']][$b]))
+						{
+							$this->normalizedSpecimen[$bucket['key']][$b]=(int)$subBucket['doc_count'];
+						}
+						else
+						{
+							$this->normalizedSpecimen[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
+						}
+					}
+				}
+			}
 		}
 
 		public function calculatSpecimenCount()
@@ -141,7 +202,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 							$product = 1 * $doc_count;
 							
-							if (!isset($collections['categoryToPreservation']))
+							if (!isset($collections['specimenCategoryToPrepType']))
 							{
 								if (isset($collections['collectionEstimatesSpecimen']) && isset($collections['collectionEstimatesSpecimen']['_other']))
 								{
@@ -155,7 +216,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 							else
 							{
 								$dryOrWet=null;
-								foreach($collections['categoryToPreservation'] as $dryOrWetKey => $dryOrWetKeyVal)
+								foreach($collections['specimenCategoryToPrepType'] as $dryOrWetKey => $dryOrWetKeyVal)
 								{
 									if (in_array($prepType, $dryOrWetKeyVal))
 									{
@@ -340,52 +401,19 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$this->storage_docCountPerColl_withoutIndivCount= $storageDocCountPerCollWithoutIndivCount; 
 			
 		}
-		
-		private function normalizePrepTypes( $collectionBuckets,$collectionBucketsWithoutPrepTypes=null )
-		{
-			$storageDocCountPerPrepType=[];
-			foreach( $collectionBuckets as $bucket )
-			{
-				$storageDocCountPerPrepType[$bucket['key']]=[];
-				if (isset($bucket['prepTypes']))
-				{
-					$boxes=$drawers=0;
-					foreach( $bucket['prepTypes']['buckets'] as $subBucket )
-					{
-						$b=strtolower($subBucket['key']);
-						if (!isset($storageDocCountPerPrepType[$b]["box"]))
-						{
-							$storageDocCountPerPrepType[$bucket['key']][$b]=(int)$subBucket['doc_count'];
-						}
-						else
-						{
-							$storageDocCountPerPrepType[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
-						}
-					}
-						
-				}
-			}
 
-			if (!is_null($collectionBucketsWithoutPrepTypes)) 
-			{
-				foreach( $collectionBucketsWithoutPrepTypes as $bucket )
-				{
-					if (!isset($storageDocCountPerPrepType[$bucket['key']])) $storageDocCountPerPrepType[$bucket['key']]=[];
-					$storageDocCountPerPrepType[$bucket['key']]['_other']=(int)$bucket['doc_count'];
-				}
-			}
-		
-			return $storageDocCountPerPrepType; 
-		}
-	
 		private function initTransformationObject()
 		{
+			
+//	    "miscellaneous": 12016,
+//		"Arts"
+			
 			$this->mapping2016ReportCategoryToCollection=[
 				'botanie hoge planten' => [
 					'label' => 'Hogere planten',
 					'mapping' => [ 'botany' ],
 					'collectionEstimatesSpecimen' => [ '_other' => 1  ],
-					'categoryToPreservation' => [ ],
+					'specimenCategoryToPrepType' => [ ],
 				],
 				'botanie lage planten' =>  [
 					'label' => 'Lagere planten',
@@ -395,91 +423,79 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				'entomologie' => [
 					'label' => 'Entomologie',
 					'mapping' => [ 'entomology','lepidoptera','hymenoptera','remaining insects','coleoptera','diptera','diptera0','orthopteroidea','odonata','hemiptera','entomologyhyj','collembola'],
-					'collectionEstimatesStorageUnits' => [ 'drawer' => 145.98, 'jar' => 1031, 'box' => 83.42, '_other' => 218.73 ],
-					'categoryToPreservation' => [
+					'collectionEstimatesStorageUnits' => [ 'drawer' => 145.98, 'jar' => 10.31, 'box' => 83.42, '_other' => 218.73 ],
+					'specimenCategoryToPrepType' => [
 						'nat' => [ 'alcohol', 'alcohol 70%'  ], 
 						'droog' => [ 'air dried', 'pinned specimen', 'microscopic slide', 'tube', 'embedded', 'envelope', 'embalmed', 'microscopic slide', 'bag', 'drawer' ]
 					]
 				],
-				'vertebraten' => [
-					'label' => 'Overige vertebraten',
-					'mapping' => [ 'vertebrates' ],
-					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
-					'categoryToPreservation' => [ 'droog' => [ 'loose bones' ] ]
-				],
 				'vertebraten zoogdieren' => [
 					'label' => 'Zoogdieren',
 					'mapping' => [ 'mammalia' ],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.23, 'nat' => 1.20 ],
-					'categoryToPreservation' => [
+					'specimenCategoryToPrepType' => [
 						'nat' => [ 'alcohol >70%', 'wet specimen', 'alcohol', 'alcohol 70%', 'alcohol 96%', 'formalin', 'glycerin' ],
-						'droog' => [ 'loose bones', 'study skin', 'droog', 'mounted skin', 'mounted', 'microscopic slide', 'not applicable', 'air dried', 'flat skin', 'mummified specimen', 'box', 'semstub', 'mounted skeleton', 'skeletonized', 'full skeleton', 'skull and horns trophy', 'standard mount', 'trophy mount', 'glassine', 'skin', 'partly mounted', 'tube', 'card mounted' ],
-						'_other' => [ 'unknown' ]
+						'droog' => [ 'loose bones', 'study skin', 'droog', 'mounted skin', 'mounted', 'microscopic slide', 'not applicable', 'air dried', 'flat skin', 'mummified specimen', 'box', 'semstub', 'mounted skeleton', 'skeletonized', 'full skeleton', 'skull and horns trophy', 'standard mount', 'trophy mount', 'glassine', 'skin', 'partly mounted', 'tube', 'card mounted', 'unknown' ]
 					]
 				],
 				'vertebraten reptielen en amfibieën' =>  [
 					'label' => 'Reptielen en amfibieën',
 					'mapping' => [ 'amphibia and reptilia' ],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.18, 'nat' => 1.79 ],
-					'categoryToPreservation' => [
+					'specimenCategoryToPrepType' => [
 						'nat'=> ['alcohol', 'formalin', 'alcohol 70%', 'glycerine', 'wet specimen', 'formalin 5%', 'alcohol-formaline' ],
 						'droog' => [ 'droog', 'air dried', 'mounted skin', 'cast', 'loose bones', 'mounted skeleton' ],
 						'_other' => [ 'alcohol & dry' ]
 					]
 				],
-				'vertebraten vissen' => [
-					'label' => 'Vissen',
-					'mapping' => [ 'pisces' ],
-					'collectionEstimatesSpecimen' => [ 'droog' => 1.00, 'nat' => 1.00 ],
-					'categoryToPreservation' => [ 'droog' => [ 'air dried' ] ]
-				],
 				'vertebraten vogels' => [
 					'label' => 'Vogels',
 					'mapping' => [ 'aves' ],
-					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, '_other' => 1.05, 'nesten' => 3.13 ],
-					'categoryToPreservation' => [
-						'nat' => [ 'alcohol', 'wet specimen', 'alcohol 96%' ],
-						'droog' => [ 'nest','air dried', 'study skin', 'mounted skin', 'skeletonized', 'microscopic slide', 'not applicable', 'loose bones', 'box', 'flat skin', 'mounted skeleton', 'mummified specimen', 'head', 'check nummer', 'kop', 'wing', 'cast', 'claws', 'skull', 'wings', 'tube', 'bill', 'case mount', 'head & leg', 'head & tail', 'mounted``', 'skin & win', 'tail', 'wing & tai' ],
-						'nesten' => [ 'nest' ]
+					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, 'nesten en eieren' => 3.13 ],
+					// Aves uses kindOfUnit ipv preparationType
+					'specimenCategoryToPrepType' => [
+						'droog en alcohol' => [ 'skin', 'skeleton (whole)', 'Wing', 'skull', 'feather', 'Not applicable', 'skin (part)', 'WholeOrganism', 'Head', 'skeleton part', 'skeleton', 'unknown', 'Leg', 'tail', 'wings & head', 'DNA-extract', 'tissue', 'wings & half tail', 'cast', 'beak', 'footprint', 'soft body parts', 'stomach content', 'wings & bill', 'wings & feathers' ],
+						'nesten en eieren' => [ 'nest', 'eggs' ]
 					]
 				],
-				'invertebrates' => [
-					'label' => 'Invertebrates collectie',
-					'mapping' => [ 'invertebrates' ],
-					'collectionEstimatesStorageUnits' => [ 'drawer' => 73.00, 'alcohol' => 6.96, '_other' => 1.00 ],
-					'categoryToPreservation' => [ 'nat' => [ 'alcohol', 'alcohol 70%' ], 'droog' => [ 'microscopic slide', 'box', 'air dried' ] ]
+				'vertebraten vissen' => [
+					'label' => 'Vissen',
+					'mapping' => [ 'pisces' ],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
+					'collectionEstimatesSpecimen' => [ 'droog' => 1.00, 'nat' => 1.00 ],
+					'specimenCategoryToPrepType' => [ 'droog' => [ 'air dried' ], 'nat' => [ 'nog te migreren' ] ]
 				],
 				'evertebraten overige collecties' => [
 					'label' => 'Evertebraten',
-					'mapping' => [ 'crustacea','cnidaria','echinodermata','porifera','vermes','hydrozoa','chelicerata and myriapoda','tunicata','bryozoa','brachiopoda','foraminifera','protozoa'],
-					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
-					'collectionEstimatesSpecimen' => [ '_other' => 4,08 ],
-					'categoryToPreservation' => [
-						'nat' => [ 'alcohol', 'wet specimen', 'alcohol 70%', 'alcohol >70%', 'formol', 'formaline', 'formalin', 'prep. glycerine', 'pre. glyc.', 'prep. (glycerine)', 'prep. glyc.', 'prep.' ],
-						'droog' => [ 'microscopic slide', 'not applicable', 'tube', 'air dried', 'jar', 'bag', 'box', 'semstub', 'box 558', 'jar', 'dried and pressed', 'microscopic slide', 'slide', 'hout-prep.', 'prep. hout', 'verwijsglaasje', 'fix. sublimaat', 'karton prep.', 'prep.hout' ],
-						'_other' => [ 'unknown' ]
-					]
+					'mapping' => [ 'crustacea','cnidaria','echinodermata','porifera','vermes','hydrozoa','chelicerata and myriapoda','tunicata','bryozoa','brachiopoda','foraminifera','protozoa', 'invertebrates'],
+					'collectionEstimatesStorageUnits' => [ 'drawer'=> 73.00, 'jar' => 6.96, '_other' => 1.00 ], // _other = Shelf, Box
+					'collectionEstimatesSpecimen' => [ '_other' => 4.08 ]
 				],
 				'evertebraten mollusca' => [
 					'label' => 'Mollusca',
 					'mapping' => [ 'mollusca'],
-					'collectionEstimatesStorageUnits' => [ 'slide drawer' => 26.71, 'alcohol' => 8.38, '_other' => 1.00 ],
-					'collectionEstimatesSpecimen' => [ '_other' => 11.70 ],
-					'categoryToPreservation' => [ 'nat' => [ 'alcohol 70%', 'alcohol 96%', 'formalin' ], 'droog' => [ 'air dried', 'not applicable', 'fossilized', 'microscopic slide', 'semstub' ] ]
+					'collectionEstimatesStorageUnits' => [ 'slide drawer' => 26.71, 'jar' => 8.38, '_other' => 1.00 ], // _other = Shelf, Box
+					'collectionEstimatesSpecimen' => [ '_other' => 11.70 ]
 				],
 				'paleontologie' => [
 					'label' => 'Paleontologie',
-					'mapping' => [ 'paleobotany','paleontology vertebrates','paleontology invertebrates','paleontology','macro vertebrates','micro vertebrates','mesozoic invertebrates','micropaleontology','cainozoic mollusca'],
+					'mapping' => [ 'paleobotany','paleontology vertebrates','paleontology invertebrates','paleontology','macro vertebrates','micro vertebrates','mesozoic invertebrates','micropaleontology','cainozoic mollusca', 'paleozoic invertebrates' ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ '_other' => 12.64 ],
-					'categoryToPreservation' => [ 'droog' => [ 'fossilized', 'not applicable', 'peel', 'fossilized', 'fossilized specimen', 'air dried', 'unknown', 'microscopic slide', 'fossilized specimen', 'box' ] ]
+					'specimenCategoryToPrepType' => [ '_other' => [ 'fossilized', 'not applicable', 'peel', 'fossilized', 'fossilized specimen', 'air dried', 'unknown', 'microscopic slide', 'fossilized specimen', 'box' ] ]
 				],
 				'mineralogie en petrologie' => [
 					'label' => 'Mineralogie en petrologie',
-					'mapping' => [  'mineralogy','petrology','mineralogy and petrology' ],
+					'mapping' => [ 'mineralogy','petrology','mineralogy and petrology' ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
-					'collectionEstimatesSpecimen' => [ 'preparaten' => 1.00,'monsters' => 1.57,'nog te migreren' => 1.00, '_other' => 1.27 ],
-					'categoryToPreservation' => [ 'droog' => [ 'thin section', 'not applicable', 'fossilized' ] ]
+					'collectionEstimatesSpecimen' => [ 'preparaten' => 1.00, 'monsters' => 1.57, '_other' => 1.00 ],
+					'specimenCategoryToPrepType' => [
+						'preparaten' => [ 'thin section' ],
+						'monsters' => [ 'not applicable', 'fossilized' ],
+						'_other' => [ 'nog te migreren' ]
+					]
 				]
 			];
 		}
