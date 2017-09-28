@@ -30,11 +30,21 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		private $specimen_noPrepTypePerCollection;
 		private $specimen_kindOfUnitPerCollection;
 		private $normalizedSpecimen;
+		private $errors=[];
 		
 		public function __construct()
 		{
 			$this->initTransformationObject();
 			$this->initCollectionUnitEstimates();
+		}
+		
+		public function runCalculations()
+		{
+			$this->normalizeSpecimenPreparationTypes();
+			$this->calculateStorageRecordsWithIndividualCount();
+			$this->calculateStorageRecordsWithoutIndividualCount();
+			$this->calculatSpecimenCount();
+			$this->calculateCollectionUnitEstimates();
 		}
 		
 		public function setStorageSumPerCollWithIndivCount( $data )
@@ -49,10 +59,19 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$this->normalizeStorageMounts();
 		}
 
-		// BRAHMS BE-export not in NBA; number taken from SQL-export
-		public function setLowerPlantsNumberFromBRAHMS( $num )
+		public function setSpecimenPrepTypePerCollection( $data )
 		{
-			$this->storage_docCountPerColl_withoutIndivCount['lagere planten']['other']=$num;
+			$this->specimen_prepTypePerCollection = $data;
+		}
+
+		public function setSpecimenNoPrepTypePerCollection( $data )
+		{
+			$this->specimen_noPrepTypePerCollection = $data;
+		}
+
+		public function setSpecimenKindOfUnitPerCollection( $data )
+		{
+			$this->specimen_kindOfUnitPerCollection = $data;
 		}
 
 		public function calculateStorageRecordsWithIndividualCount()
@@ -62,6 +81,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			{
 				foreach($this->mapping2016ReportCategoryToCollection as $category=>$collections)
 				{
+					if ( !isset($collections['mapping']) )
+						continue;
+					
 					if (in_array(strtolower($collection['key']),$collections['mapping']))
 					{
 						$this->collectionUnitEstimates[$category]['storageRecordsWithIndividualCount_number']+=$collection['doc_count'];
@@ -69,7 +91,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						break;
 					}
 				}
-			}	
+			}
+
+			//q( $this->collectionUnitEstimates,1);
 		}			
 		
 		public function calculateStorageRecordsWithoutIndividualCount()
@@ -78,6 +102,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			{
 				foreach($this->mapping2016ReportCategoryToCollection as $category=>$collections)
 				{
+					if ( !isset($collections['mapping']) )
+						continue;
+
 					if (in_array(strtolower($collection),$collections['mapping']))
 					{
 						if (!isset($collections['collectionEstimatesStorageUnits'])) continue;
@@ -109,21 +136,8 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					}
 				}
 			}
-		}
 
-		public function setSpecimenPrepTypePerCollection( $data )
-		{
-			$this->specimen_prepTypePerCollection = $data;
-		}
-
-		public function setSpecimenNoPrepTypePerCollection( $data )
-		{
-			$this->specimen_noPrepTypePerCollection = $data;
-		}
-
-		public function setSpecimenKindOfUnitPerCollection( $data )
-		{
-			$this->specimen_kindOfUnitPerCollection = $data;
+			//q( $this->collectionUnitEstimates ,1 );			
 		}
 		
 		public function normalizeSpecimenPreparationTypes()
@@ -131,7 +145,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$this->normalizedSpecimen=[];
 			foreach( (array)$this->specimen_prepTypePerCollection as $bucket )
 			{
-				if ($bucket['key']=="Aves") continue; // Aves is counted by kindOfUnit
+				$d = $this->getPrepTypeKeyByCollection($bucket['key']);
+				if (!is_null($d) && $d!='preparationType')
+					continue;
 				
 				$this->normalizedSpecimen[$bucket['key']]=[];
 				if (isset($bucket['prepTypes']))
@@ -164,8 +180,10 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 			foreach( (array)$this->specimen_kindOfUnitPerCollection as $bucket )
 			{
-				if ($bucket['key']!="Aves") continue; // only Aves is counted by kindOfUnit
-				
+				$d = $this->getPrepTypeKeyByCollection($bucket['key']);
+				if (is_null($d) || (!is_null($d) && $d!='kindOfUnit'))
+					continue;
+
 				$this->normalizedSpecimen[$bucket['key']]=[];
 				if (isset($bucket['kindsOfUnit']))
 				{
@@ -183,15 +201,38 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						}
 					}
 				}
-			}
+			}			
+			
 		}
 
+		public function addStaticNumbers( $p )
+		{
+			if ( !isset($p['category']) ) return;
+			
+			$c = strtolower($p['category']);
+			
+			if ( !isset($this->collectionUnitEstimates[$c]) )
+			{
+				$this->collectionUnitEstimates[$c] = $this->initSumObject();
+				if ( isset($p['label']) ) $this->collectionUnitEstimates[$c][$p['label']];
+			}
+			
+			if ( isset($p['specimenNumber']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_number'] += $p['specimenNumber'];
+			if ( isset($p['specimenCount']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_estimated_sum'] += $p['specimenCount'];
+			if ( isset($p['storageNumber']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_number'] += $p['storageNumber'];
+			if ( isset($p['storageCount']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_sum'] += $p['storageCount'];
+
+			//q($this->collectionUnitEstimates,1);
+		}
+		
 		public function calculatSpecimenCount()
 		{
 			foreach( $this->normalizedSpecimen as $collection => $prepTypes)
 			{
 				foreach($this->mapping2016ReportCategoryToCollection as $category=>$collections)
 				{
+					if ( !isset($collections['mapping']) ) continue;
+
 					if (in_array(strtolower($collection),$collections['mapping']))
 					{
 						if ( $category == 'entomologie' ) continue; // these overlap with the (more complete) storage units
@@ -226,6 +267,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 								}
 								if (is_null($dryOrWet))
 								{
+									
+									$this->addError( $category .": '" . $prepType . "' not mapped ");
+									
 									if (isset($collections['collectionEstimatesSpecimen']) && isset($collections['collectionEstimatesSpecimen']['_other']))
 									{
 										$product=$collections['collectionEstimatesSpecimen']['_other'] * $doc_count;
@@ -275,14 +319,6 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		
 		public function getCollectionUnitEstimates()
 		{
-			foreach( $this->collectionUnitEstimates as $key=>$val )
-			{
-				$this->collectionUnitEstimates[$key]['totalUnit_sum']=
-					(int)$val['specimenUnit_sum_estimate'] + 
-					(int)$val['storageRecordsWithoutIndividualCount_estimated_sum'] + 
-					(int)$val['storageRecordsWithIndividualCount_sum'];
-
-			}
 			return $this->collectionUnitEstimates;
 		}
 
@@ -308,30 +344,13 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		{
 			return $this->getCollectionUnitEstimates();
 		}
-		
-		public function addStaticNumbers( $key, $numbers )
+
+		public function getErrors()
 		{
-			if (!isset($this->collectionUnitEstimates[$key]))
-			{
-				$this->collectionUnitEstimates[$key] = [
-					'specimenUnit_count' => isset($numbers['specimenUnit_count']) ? $numbers['specimenUnit_count'] : null,
-					'specimenUnit_sum_estimate' => isset($numbers['specimenUnit_sum_estimate']) ? $numbers['specimenUnit_sum_estimate'] : null,
-					'storageRecordsWithoutIndividualCount_number' => isset($numbers['storageRecordsWithoutIndividualCount_number']) ? $numbers['storageRecordsWithoutIndividualCount_number'] : null,
-					'storageRecordsWithoutIndividualCount_estimated_sum' => isset($numbers['storageRecordsWithoutIndividualCount_estimated_sum']) ? $numbers['storageRecordsWithoutIndividualCount_estimated_sum'] : null,
-					'storageRecordsWithIndividualCount_number' => isset($numbers['storageRecordsWithIndividualCount_number']) ? $numbers['storageRecordsWithIndividualCount_number'] : null,
-					'storageRecordsWithIndividualCount_sum' => isset($numbers['storageRecordsWithIndividualCount_sum']) ? $numbers['storageRecordsWithIndividualCount_sum'] : null,
-				];
-			}
-			else
-			{
-				$this->collectionUnitEstimates[$key]['specimenUnit_count'] += isset($numbers['specimenUnit_count']) ? $numbers['specimenUnit_count'] : 0;
-				$this->collectionUnitEstimates[$key]['specimenUnit_sum_estimate'] += isset($numbers['specimenUnit_sum_estimate']) ? $numbers['specimenUnit_sum_estimate'] : 0;
-				$this->collectionUnitEstimates[$key]['storageRecordsWithoutIndividualCount_number'] += isset($numbers['storageRecordsWithoutIndividualCount_number']) ? $numbers['storageRecordsWithoutIndividualCount_number'] : 0;
-				$this->collectionUnitEstimates[$key]['storageRecordsWithoutIndividualCount_estimated_sum'] += isset($numbers['storageRecordsWithoutIndividualCount_estimated_sum']) ? $numbers['storageRecordsWithoutIndividualCount_estimated_sum'] : 0;
-				$this->collectionUnitEstimates[$key]['storageRecordsWithIndividualCount_number'] += isset($numbers['storageRecordsWithIndividualCount_number']) ? $numbers['storageRecordsWithIndividualCount_number'] : 0;
-				$this->collectionUnitEstimates[$key]['storageRecordsWithIndividualCount_sum'] += isset($numbers['storageRecordsWithIndividualCount_sum']) ? $numbers['storageRecordsWithIndividualCount_sum'] : 0;
-			}
+			return $this->errors;
 		}
+
+		
 		
 		private function initSumObject()
 		{
@@ -398,22 +417,51 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				$storageDocCountPerCollWithoutIndivCount[$bucket['key']]["drawer"]=$drawers;
 			}
 			
-			$this->storage_docCountPerColl_withoutIndivCount= $storageDocCountPerCollWithoutIndivCount; 
+			$this->storage_docCountPerColl_withoutIndivCount = $storageDocCountPerCollWithoutIndivCount; 
 			
 		}
 
+		private function getPrepTypeKeyByCollection( $collectionType )
+		{
+			foreach($this->mapping2016ReportCategoryToCollection as $reportCategory=>$val)
+			{
+				if( isset($val['mapping']) && in_array(strtolower($collectionType),$val['mapping']) )
+				{
+					return isset($val['prepTypeKey']) ? $val['prepTypeKey'] : null;
+				}
+			}
+		}
+
+		private function calculateCollectionUnitEstimates()
+		{
+			foreach( $this->collectionUnitEstimates as $key=>$val )
+			{
+				$this->collectionUnitEstimates[$key]['totalUnit_sum']=
+					(int)$val['specimenUnit_sum_estimate'] + 
+					(int)$val['storageRecordsWithoutIndividualCount_estimated_sum'] + 
+					(int)$val['storageRecordsWithIndividualCount_sum'];
+
+			}
+		}
+
+		
+		private function addError( $error )
+		{
+			$this->errors[]=$error;
+		}
+		
 		private function initTransformationObject()
 		{
 			
-//	    "miscellaneous": 12016,
-//		"Arts"
+			// averages: https://drive.google.com/a/naturalis.nl/file/d/0BwegJAX7tT_IcTBiUl9JTnVrdlU/view?usp=sharing
 			
 			$this->mapping2016ReportCategoryToCollection=[
 				'botanie hoge planten' => [
 					'label' => 'Hogere planten',
 					'mapping' => [ 'botany' ],
+					'prepTypeKey' => 'preparationType',
+					'specimenCategoryToPrepType' => [ '_other' => [ '_other' ] ],
 					'collectionEstimatesSpecimen' => [ '_other' => 1  ],
-					'specimenCategoryToPrepType' => [ ],
 				],
 				'botanie lage planten' =>  [
 					'label' => 'Lagere planten',
@@ -423,82 +471,97 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				'entomologie' => [
 					'label' => 'Entomologie',
 					'mapping' => [ 'entomology','lepidoptera','hymenoptera','remaining insects','coleoptera','diptera','diptera0','orthopteroidea','odonata','hemiptera','entomologyhyj','collembola'],
-					'collectionEstimatesStorageUnits' => [ 'drawer' => 145.98, 'jar' => 10.31, 'box' => 83.42, '_other' => 218.73 ],
+					'prepTypeKey' => 'preparationType',
 					'specimenCategoryToPrepType' => [
 						'nat' => [ 'alcohol', 'alcohol 70%'  ], 
 						'droog' => [ 'air dried', 'pinned specimen', 'microscopic slide', 'tube', 'embedded', 'envelope', 'embalmed', 'microscopic slide', 'bag', 'drawer' ]
-					]
+					],
+					'collectionEstimatesStorageUnits' => [ 'drawer' => 145.98, 'jar' => 10.31, 'box' => 83.42, '_other' => 218.73 ],
 				],
 				'vertebraten zoogdieren' => [
 					'label' => 'Zoogdieren',
 					'mapping' => [ 'mammalia' ],
-					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
-					'collectionEstimatesSpecimen' => [ 'droog' => 1.23, 'nat' => 1.20 ],
+					'prepTypeKey' => 'preparationType',
 					'specimenCategoryToPrepType' => [
 						'nat' => [ 'alcohol >70%', 'wet specimen', 'alcohol', 'alcohol 70%', 'alcohol 96%', 'formalin', 'glycerin' ],
-						'droog' => [ 'loose bones', 'study skin', 'droog', 'mounted skin', 'mounted', 'microscopic slide', 'not applicable', 'air dried', 'flat skin', 'mummified specimen', 'box', 'semstub', 'mounted skeleton', 'skeletonized', 'full skeleton', 'skull and horns trophy', 'standard mount', 'trophy mount', 'glassine', 'skin', 'partly mounted', 'tube', 'card mounted', 'unknown' ]
-					]
+						'droog' => [ 'loose bones', 'study skin', 'droog', 'mounted skin', 'mounted', 'microscopic slide', 'not applicable', 'air dried', 'flat skin', 'mummified specimen', 'box', 'semstub', 'mounted skeleton', 'skeletonized', 'full skeleton', 'skull and horns trophy', 'standard mount', 'trophy mount', 'glassine', 'skin', 'partly mounted', 'tube', 'card mounted', 'unknown', 'dry', '_other' ]
+					],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
+					'collectionEstimatesSpecimen' => [ 'droog' => 1.23, 'nat' => 1.20 ],
 				],
 				'vertebraten reptielen en amfibieën' =>  [
 					'label' => 'Reptielen en amfibieën',
 					'mapping' => [ 'amphibia and reptilia' ],
-					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
-					'collectionEstimatesSpecimen' => [ 'droog' => 1.18, 'nat' => 1.79 ],
+					'prepTypeKey' => 'preparationType',
 					'specimenCategoryToPrepType' => [
 						'nat'=> ['alcohol', 'formalin', 'alcohol 70%', 'glycerine', 'wet specimen', 'formalin 5%', 'alcohol-formaline' ],
-						'droog' => [ 'droog', 'air dried', 'mounted skin', 'cast', 'loose bones', 'mounted skeleton' ],
-						'_other' => [ 'alcohol & dry' ]
-					]
+						'droog' => [ 'droog', 'air dried', 'mounted skin', 'cast', 'loose bones', 'mounted skeleton', 'dry' ],
+						'_other' => [ 'alcohol & dry', '_other' ]
+					],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00  ],
+					'collectionEstimatesSpecimen' => [ 'droog' => 1.18, 'nat' => 1.79 ],
 				],
 				'vertebraten vogels' => [
 					'label' => 'Vogels',
 					'mapping' => [ 'aves' ],
-					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, 'nesten en eieren' => 3.13 ],
-					// Aves uses kindOfUnit ipv preparationType
+					'prepTypeKey' => 'kindOfUnit',
 					'specimenCategoryToPrepType' => [
-						'droog en alcohol' => [ 'skin', 'skeleton (whole)', 'Wing', 'skull', 'feather', 'Not applicable', 'skin (part)', 'WholeOrganism', 'Head', 'skeleton part', 'skeleton', 'unknown', 'Leg', 'tail', 'wings & head', 'DNA-extract', 'tissue', 'wings & half tail', 'cast', 'beak', 'footprint', 'soft body parts', 'stomach content', 'wings & bill', 'wings & feathers' ],
-						'nesten en eieren' => [ 'nest', 'eggs' ]
-					]
+						'droog en alcohol' => [ 'skin', 'skeleton (whole)', 'Wing', 'skull', 'feather', 'Not applicable', 'skin (part)', 'WholeOrganism', 'Head', 'skeleton part', 'skeleton', 'unknown', 'Leg', 'tail', 'wings & head', 'DNA-extract', 'tissue', 'wings & half tail', 'cast', 'beak', 'footprint', 'soft body parts', 'stomach content', 'wings & bill', 'wings & feathers','dna-extract', 'leg' ,'head', 'wholeorganism', 'wing', 'not applicable' ],
+						'nesten en eieren' => [ 'nest', 'egg' ]
+					],
+					'collectionEstimatesSpecimen' => [ 'droog en alcohol' => 1.05, 'nesten en eieren' => 3.13 ],
 				],
 				'vertebraten vissen' => [
 					'label' => 'Vissen',
 					'mapping' => [ 'pisces' ],
+					'prepTypeKey' => 'preparationType',
+					'specimenCategoryToPrepType' => [ 'droog' => [ 'air dried' ], 'nat' => [ 'nog te migreren' ] ],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ 'droog' => 1.00, 'nat' => 1.00 ],
-					'specimenCategoryToPrepType' => [ 'droog' => [ 'air dried' ], 'nat' => [ 'nog te migreren' ] ]
 				],
 				'evertebraten overige collecties' => [
 					'label' => 'Evertebraten',
 					'mapping' => [ 'crustacea','cnidaria','echinodermata','porifera','vermes','hydrozoa','chelicerata and myriapoda','tunicata','bryozoa','brachiopoda','foraminifera','protozoa', 'invertebrates'],
+					'prepTypeKey' => 'preparationType',
 					'collectionEstimatesStorageUnits' => [ 'drawer'=> 73.00, 'jar' => 6.96, '_other' => 1.00 ], // _other = Shelf, Box
 					'collectionEstimatesSpecimen' => [ '_other' => 4.08 ]
 				],
 				'evertebraten mollusca' => [
 					'label' => 'Mollusca',
 					'mapping' => [ 'mollusca'],
+					'prepTypeKey' => 'preparationType',
 					'collectionEstimatesStorageUnits' => [ 'slide drawer' => 26.71, 'jar' => 8.38, '_other' => 1.00 ], // _other = Shelf, Box
 					'collectionEstimatesSpecimen' => [ '_other' => 11.70 ]
 				],
 				'paleontologie' => [
 					'label' => 'Paleontologie',
 					'mapping' => [ 'paleobotany','paleontology vertebrates','paleontology invertebrates','paleontology','macro vertebrates','micro vertebrates','mesozoic invertebrates','micropaleontology','cainozoic mollusca', 'paleozoic invertebrates' ],
+					'prepTypeKey' => 'preparationType',
+					'specimenCategoryToPrepType' => [
+						'_other' => [ 'fossilized', 'not applicable', 'peel', 'fossilized', 'fossilized specimen', 'air dried', 'unknown', 'microscopic slide', 'fossilized specimen', 'box' ]
+					],
 					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
 					'collectionEstimatesSpecimen' => [ '_other' => 12.64 ],
-					'specimenCategoryToPrepType' => [ '_other' => [ 'fossilized', 'not applicable', 'peel', 'fossilized', 'fossilized specimen', 'air dried', 'unknown', 'microscopic slide', 'fossilized specimen', 'box' ] ]
 				],
 				'mineralogie en petrologie' => [
 					'label' => 'Mineralogie en petrologie',
+					'prepTypeKey' => 'preparationType',
 					'mapping' => [ 'mineralogy','petrology','mineralogy and petrology' ],
-					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
-					'collectionEstimatesSpecimen' => [ 'preparaten' => 1.00, 'monsters' => 1.57, '_other' => 1.00 ],
 					'specimenCategoryToPrepType' => [
 						'preparaten' => [ 'thin section' ],
 						'monsters' => [ 'not applicable', 'fossilized' ],
 						'_other' => [ 'nog te migreren' ]
-					]
-				]
+					],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
+					'collectionEstimatesSpecimen' => [ 'preparaten' => 1.00, 'monsters' => 1.57, '_other' => 1.00 ],
+				],
+				'2d materiaal' => [
+					'label' => '2D materiaal',
+					'prepTypeKey' => 'preparationType',
+					'mapping' => [ 'arts' ],
+					'collectionEstimatesSpecimen' => [ '_other' => 1  ],
+					'collectionEstimatesStorageUnits' => [ '_other' => 1.00 ],
+				],		
 			];
-		}
-
-	
+		}	
 	}

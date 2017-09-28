@@ -91,51 +91,43 @@
 
 	
 	// callcuating totals
-	$collectionUnitEstimator=new collectionUnitCalculation;
+	$calculator=new collectionUnitCalculation;
 	
-	$collectionUnitEstimator->setStorageSumPerCollWithIndivCount( $data->storage_sumPerColl_withIndivCount['collections']['buckets'] );
-	$collectionUnitEstimator->calculateStorageRecordsWithIndividualCount();
+	$calculator->setStorageSumPerCollWithIndivCount( $data->storage_sumPerColl_withIndivCount['collections']['buckets'] );
+	$calculator->setStorageSumPerCollWithoutIndivCount( $data->storage_docCountPerColl_withoutIndivCount['collections']['buckets'] );
+	$calculator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection['collections']['buckets'] );
+	$calculator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection['collections']['buckets'] );
+	$calculator->setSpecimenKindOfUnitPerCollection( $data->specimen_kindOfUnitPerCollection['collections']['buckets'] );
 	
-	$collectionUnitEstimator->setStorageSumPerCollWithoutIndivCount( $data->storage_docCountPerColl_withoutIndivCount['collections']['buckets'] );
-	$collectionUnitEstimator->setLowerPlantsNumberFromBRAHMS( 13527 );
-	$collectionUnitEstimator->calculateStorageRecordsWithoutIndividualCount();
-	$collectionUnitEstimator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection['collections']['buckets'] );
-	$collectionUnitEstimator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection['collections']['buckets'] );
-	
-	$collectionUnitEstimator->setSpecimenKindOfUnitPerCollection( $data->specimen_kindOfUnitPerCollection['collections']['buckets'] );
-	
-	
-	$collectionUnitEstimator->normalizeSpecimenPreparationTypes();
-	$collectionUnitEstimator->calculatSpecimenCount();
-	
-	/*
-	
-		vaste getallen harmoniseren!
-	
-	*/
-	
-	
-    $collectionUnitEstimator->addStaticNumbers( '2D materiaal', [ 'specimenUnit_count' => 625500, 'specimenUnit_sum_estimate' => 625500 ] );
+	$staticNumbers = [
+		'BrahmsLowerPlants' => [ 'category' => 'Botanie lage planten', 'storageNumber' => 13527, 'average' => 40.30 ],
+		'2D' => [ 'category' => '2D materiaal', 'specimenNumber' => (625500 - 2449), 'average' => 1 ],
+		'PiscesLegacy' => [ 'category' => 'Vertebraten vissen', 'specimenNumber' => 116000, 'average' => 1 ],
+		'StonesLegacy' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 100000, 'average' => 1 ],
+		'StonesNBADiscarded' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 199000, 'average' => 1 ] // should be 'thin section'
+	];
 
-    // still in legacy database:
-    $collectionUnitEstimator->addStaticNumbers( 'vertebraten vissen', [ 'specimenUnit_count' => 116000, 'specimenUnit_sum_estimate' => 116000 ] );
+	foreach((array)$staticNumbers as $key=>$val)
+	{
+		$calculator->addStaticNumbers( [
+			'category' =>  $val['category'], 
+			'storageNumber' => ( isset($val['storageNumber']) ? $val['storageNumber'] : 0 ),
+			'storageCount' => ( isset($val['storageNumber']) ? ($val['storageNumber'] * $val['average']) : 0 ),
+			'specimenNumber' => ( isset($val['specimenNumber']) ? $val['specimenNumber'] : 0 ),
+			'specimenCount' => ( isset($val['specimenNumber']) ? ($val['specimenNumber'] * $val['average']) : 0 ),
+		] );	
+	}
+
 	
+	$calculator->runCalculations();
+	$calculator->roundEstimates();
+	$calculator->sortCategoryBuckets();
 	
-	// not in NBA:
-	//$collectionUnitEstimator->addStaticNumbers( '2D materiaal', [ 'specimenUnit_count' => 625500 - dyna(2449), avg=1, 'specimenUnit_sum_estimate' => 625500 ] );
-	// still in legacy database:
-	//$collectionUnitEstimator->addStaticNumbers( 'vertebraten vissen', [ 'specimenUnit_count' => 116000, 'specimenUnit_sum_estimate' => 116000 ] );  Pisces 'nog te migreren'
-	
-//	$collectionUnitEstimator->addStaticNumbers( 'NOG TE MIGREREN STENEN: mineralogy and petrology, 'nog te migreren', 100.000 );
-//	$collectionUnitEstimator->addStaticNumbers( 'DISCARDED DURING ETL: mineralogy and petrology, 'thin section', 199.000 );
-	
-	$collectionUnitEstimator->roundEstimates();
-	
-	$collectionUnitEstimates=$collectionUnitEstimator->getCollectionUnitEstimates();
-	$grandUnitsTotal=$collectionUnitEstimator->getGrandUnitsTotal();
-	
-	$collectionUnitEstimator->sortCategoryBuckets();
-	$categoryBuckets=$collectionUnitEstimator->getCategoryBuckets();
+	$collectionUnitEstimates=$calculator->getCollectionUnitEstimates();
+	$grandUnitsTotal=$calculator->getGrandUnitsTotal();
+	$categoryBuckets=$calculator->getCategoryBuckets();
+
+	//q($calculator->getErrors());
 
 	ob_start();
 
@@ -192,7 +184,7 @@ var colors=[];
 	$i=0;
 	foreach((array)$categoryBuckets as $key=>$bucket)
 	{
-		if ($i++==9)
+		if ($i++==10)
 		{
 			$buffer[] = '</table><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 		}
@@ -205,7 +197,7 @@ var colors=[];
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_FULL, "info" => "normal-right-aligned" ],
-		[ "title" => __("Collection categories by object count"), "main" => implode("\n",$buffer) ]
+		[ "title" => __("Collection categories by specimen count"), "main" => implode("\n",$buffer) ]
 	);
 	
 	/* ------------------------------------------------------------------------------------------------------------------------ */
