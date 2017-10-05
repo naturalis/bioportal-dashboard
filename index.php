@@ -104,7 +104,8 @@
 		'2D' => [ 'category' => '2D materiaal', 'specimenNumber' => (625500 - 2449), 'average' => 1 ],
 		'PiscesLegacy' => [ 'category' => 'Vertebraten vissen', 'specimenNumber' => 116000, 'average' => 1 ],
 		'StonesLegacy' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 100000, 'average' => 1 ],
-		'StonesNBADiscarded' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 199000, 'average' => 1 ] // should be 'thin section'
+		'StonesNBADiscarded' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 199000, 'average' => 1 ], // should be 'thin section'
+		'paleoLegacy' => [ 'category' => 'paleontologie', 'specimenNumber' => (714000 - 593265), 'average' => 12.64 ]
 	];
 
 	foreach((array)$staticNumbers as $key=>$val)
@@ -188,7 +189,11 @@ var colors=[];
 		{
 			$buffer[] = '</table><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 		}
-		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . '</td><td class="number">' .formatNumber( $bucket['totalUnit_sum'] ) . '</td></tr>';
+		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . '</td><td class="number">' .
+//			formatNumber( $bucket['specimenUnit_count'] ) .' / '. 
+			formatNumber( $bucket['totalUnit_sum'] ) 
+
+			. '</td></tr>';
 	}
 	
 	$buffer[]='</table></div>';
