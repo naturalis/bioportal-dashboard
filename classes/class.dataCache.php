@@ -16,7 +16,7 @@
 		private $project;
 		private $field;
 		private $data=[];
-		private $createQuery="create table if not exists data_cache (project varchar(32) not null,field varchar(255) not null,data varchar(32768),created timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,PRIMARY KEY (`project`,`field`)) ENGINE = MYISAM";
+		private $createQuery="create table if not exists data_cache (project varchar(32) not null,field varchar(255) not null,data longblob,created timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,PRIMARY KEY (`project`,`field`)) CHARACTER SET utf8 ENGINE = MYISAM";
 		private $saveQuery="insert into data_cache (`project`,`field`,`data`) values ('%s','%s','%s') on duplicate key update `data` = '%s'";
 		private $selectQuery="select * from data_cache where `project` = '%s' and `field` = '%s'";
 		private $selectAllQuery="select * from data_cache where `project` = '%s'";

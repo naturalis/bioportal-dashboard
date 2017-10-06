@@ -31,6 +31,11 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		private $specimen_kindOfUnitPerCollection;
 		private $normalizedSpecimen;
 		private $errors=[];
+		private $storageMountPerCollectionPerDutchProvince;
+		private $specimenKindOfUnitPerCollectionPerDutchProvince;
+		private $specimenPreparationTypePerCollectionPerDutchProvince;
+		private $provinces=[];
+	
 		
 		public function __construct()
 		{
@@ -74,6 +79,233 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$this->specimen_kindOfUnitPerCollection = $data;
 		}
 
+		public function setStorageMountPerCollectionPerDutchProvince( $data )
+		{
+			$this->storageMountPerCollectionPerDutchProvince=$data;
+		}
+		
+		public function setSpecimenKindOfUnitPerCollectionPerDutchProvince( $data )
+		{
+			$this->specimenKindOfUnitPerCollectionPerDutchProvince=$data;
+		}
+		
+		public function setSpecimenPreparationTypePerCollectionPerDutchProvince( $data )
+		{
+			$this->specimenPreparationTypePerCollectionPerDutchProvince=$data;
+		}
+
+		public function calculateDutchProvinceNumbers()
+		{
+			$this->provinces=[];
+
+			if ( isset($this->storageMountPerCollectionPerDutchProvince) )
+			{
+				foreach($this->storageMountPerCollectionPerDutchProvince as $province)
+				{
+					$type='storage';
+					$prov=$this->normalizeProvinceNames($province['key']);
+					$p=$prov['label'];
+
+					if (!isset($this->provinces[$p]))
+					{
+						$this->provinces[$p]=[];
+						$this->provinces[$p]['total']=0;
+						$this->provinces[$p]['code']=$prov['code'];
+						$this->provinces[$p]['valid']=$prov['valid'];
+					}
+
+					foreach($province['collections']['buckets'] as $collection)
+					{
+						$c=$collection['key'];
+
+						if (!isset($this->provinces[$p][$c]))
+						{
+							$this->provinces[$p]['collections'][$c]=[];
+							$this->provinces[$p]['collections'][$c]['total']=0;
+						}
+
+						foreach($collection['mounts']['buckets'] as $mount)
+						{	
+							$m=$this->normalizeMount( $mount['key'] );
+							$avg=$this->findCollectionAverage( $c, $type, $m, 'mount' );
+							$tot=($mount['doc_count'] * $avg);
+							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
+							$this->provinces[$p]['collections'][$c]['total']+=$tot;
+						}
+					}
+				}
+			}
+
+			if ( isset($this->specimenKindOfUnitPerCollectionPerDutchProvince) )
+			{
+				foreach($this->specimenKindOfUnitPerCollectionPerDutchProvince as $province)
+				{
+					$type='specimen';
+					$prov=$this->normalizeProvinceNames($province['key']);
+					$p=$prov['label'];
+
+					if (!isset($this->provinces[$p]))
+					{
+						$this->provinces[$p]=[];
+						$this->provinces[$p]['total']=0;
+						$this->provinces[$p]['code']=$prov['code'];
+						$this->provinces[$p]['valid']=$prov['valid'];
+					}
+
+					foreach($province['collections']['buckets'] as $collection)
+					{
+						$c=$collection['key'];
+
+						if (!isset($this->provinces[$p][$c]))
+						{
+							$this->provinces[$p]['collections'][$c]=[];
+							$this->provinces[$p]['collections'][$c]['total']=0;
+						}
+						
+						if ($c=='Botany' && $this->provinces[$p]['collections'][$c]['total']==0)
+						{
+							$avg=$this->findCollectionAverage( $c, $type, '_other', 'preparationType' );
+							$tot=($unit['doc_count'] * $avg);
+							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";			
+							$this->provinces[$p]['collections'][$c]['total']=$tot;
+						}
+						else
+						{
+							foreach($collection['kindsOfUnit']['buckets'] as $unit)
+							{	
+								$m=$this->normalizeMount( $unit['key'] );
+								$avg=$this->findCollectionAverage( $c, $type, $m, 'kindOfUnit' );
+								$tot=($unit['doc_count'] * $avg);
+								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
+								$this->provinces[$p]['collections'][$c]['total']+=$tot;
+							}		
+						}
+					}
+				}
+			}
+
+			if ( isset($this->specimenPreparationTypePerCollectionPerDutchProvince) )
+			{
+				foreach($this->specimenPreparationTypePerCollectionPerDutchProvince as $province)
+				{
+					$type='specimen';
+					$prov=$this->normalizeProvinceNames($province['key']);
+					$p=$prov['label'];
+
+					if (!isset($this->provinces[$p]))
+					{
+						$this->provinces[$p]=[];
+						$this->provinces[$p]['total']=0;
+						$this->provinces[$p]['code']=$prov['code'];
+						$this->provinces[$p]['valid']=$prov['valid'];
+					}
+
+					foreach($province['collections']['buckets'] as $collection)
+					{
+						$c=$collection['key'];
+
+						if (!isset($this->provinces[$p][$c]))
+						{
+							$this->provinces[$p]['collections'][$c]=[];
+							$this->provinces[$p]['collections'][$c]['total']=0;
+						}
+
+						if ($c=='Botany' && $this->provinces[$p]['collections'][$c]['total']==0)
+						{
+							$avg=$this->findCollectionAverage( $c, $type, '_other', 'preparationType' );
+							$tot=($unit['doc_count'] * $avg);
+							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";			
+							$this->provinces[$p]['collections'][$c]['total']=$tot;
+						}
+						else
+						{
+							foreach($collection['preparationTypes']['buckets'] as $unit)
+							{	
+								//$m=this->normalizeMount( $unit['key'] );
+								$m=$unit['key'];
+								$avg=$this->findCollectionAverage( $c, $type, $m, 'preparationType' );
+								$tot=($unit['doc_count'] * $avg);
+								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
+								$this->provinces[$p]['collections'][$c]['total']+=$tot;
+							}		
+						}
+					}
+				}
+			}
+			
+			foreach($this->provinces as $province=>$collections)
+			{
+				foreach($collections['collections'] as $collection=>$numbers)
+				{
+					$this->provinces[$province]['total']+=$numbers['total'];
+				}
+			}
+		}
+
+		public function aggregateDutchProvinceNumbers()
+		{
+			foreach($this->provinces as $province=>$collections)
+			{
+			 	$d=[];
+				$tot=0;
+				$rest=0;
+				foreach($collections['collections'] as $collection=>$numbers)
+				{
+					$allocated=false;
+					foreach($this->mapping2016ReportCategoryToCollection as $category=>$val)
+					{
+						if (isset($val['mapping']) && in_array(strtolower($collection),$val['mapping']))
+						{
+							$c=$category;
+							if (isset($d[$c]))
+							{
+								$d[$c]['total']+=$numbers['total'];
+							}
+							else
+							{
+								$d[$c]['total']=$numbers['total'];
+							}
+							$tot+=$numbers['total'];
+							$allocated=true;
+						}
+					}
+					if (!$allocated)
+					{
+						$rest+=$numbers['total'];
+						//echo $collection,":",$numbers['total'],"<br />";
+					}
+				}
+				$d['_rest']['total']=$rest;
+				$this->provinces[$province]['collections']=$d;
+				$this->provinces[$province]['total']=$tot+$rest;
+			}
+		}
+		
+		public function getDutchProvinceNumbers()
+		{
+			$grandTotal=0;
+			foreach($this->provinces as $val)
+			{
+				$grandTotal+=$val['total'];
+			}
+			foreach($this->provinces as $key=>$val)
+			{
+				$this->provinces[$key]['percentage']=round(($val['total'] / $grandTotal) * 100,2);
+			}
+
+			$dir='desc';
+			$field='total';
+			uasort ($this->provinces, function ($a, $b) use ($field,$dir)
+			{
+			   return ($dir!='desc' ? 1 : -1) * ($a[$field] - $b[$field]);
+			});
+			
+			
+			
+			return $this->provinces;
+		}
+
+		
 		public function calculateStorageRecordsWithIndividualCount()
 		{
 			// storage units that have an actual individualCount
@@ -350,8 +582,119 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			return $this->errors;
 		}
 
-		
-		
+		public function findCollectionAverage( $collection, $storageOrSpecimen, $unit, $typeOfKey )
+		{
+			$collection=strtolower($collection);
+			$storageOrSpecimen=strtolower($storageOrSpecimen);
+			$unit=strtolower($unit);
+	
+			foreach($this->mapping2016ReportCategoryToCollection as $category=>$val)
+			{
+				if ($storageOrSpecimen=='specimen' && $val['prepTypeKey']!=$typeOfKey) continue;
+
+				if (isset($val['mapping']) && in_array($collection,$val['mapping']))
+				{
+					if ($storageOrSpecimen=='specimen')
+					{
+						if (isset($val['collectionEstimatesSpecimen']) && isset($val['specimenCategoryToPrepType']))
+						{
+							foreach($val['specimenCategoryToPrepType'] as $prepType=>$units)
+							{
+								if (in_array($unit,$units) && isset($val['collectionEstimatesSpecimen'][$prepType]))
+								{
+									return $val['collectionEstimatesSpecimen'][$prepType];
+								}
+							}
+						}
+						else
+						if (isset($val['collectionEstimatesSpecimen']) && isset($val['collectionEstimatesSpecimen']['_other']))
+						{
+							return $val['collectionEstimatesSpecimen']['_other'];
+						}
+					}
+					else
+					if ($storageOrSpecimen=='storage')
+					{
+						if (isset($val['collectionEstimatesStorageUnits']) && isset($val['collectionEstimatesStorageUnits'][$unit]))
+						{
+							return $val['collectionEstimatesStorageUnits'][$unit];
+						}
+						else
+						if (isset($val['collectionEstimatesStorageUnits']) && $val['collectionEstimatesStorageUnits']['_other'])
+						{
+							return $val['collectionEstimatesStorageUnits']['_other'];
+						}
+					}
+				}
+			}
+
+			return 1;
+
+		}
+
+		public function normalizeProvinceNames( $p )
+		{
+			$pp=preg_replace('/[\.,\s-]/','',strtolower($p));
+
+			if (stripos($p,'limb')!==false || $pp=='li' || $pp=='l')
+				return [ 'label'=> 'Limburg', 'code'=> 'nl-li', 'valid'=> true ];
+
+			if (stripos($p,'brabant')!==false || $pp=='nb')
+				return [ 'label'=> 'Noord-Brabant', 'code'=> 'nl-nb', 'valid'=> true ];
+
+			if (stripos($p,'overijssel')!==false || $pp=='ov')
+				return [ 'label'=> 'Overijssel', 'code'=> 'nl-ov', 'valid'=> true ];
+
+			if (stripos($p,'gelderland')!==false || $pp=='gld' || $pp=='ge')
+				return [ 'label'=> 'Gelderland', 'code'=> 'nl-ge', 'valid'=> true ];
+
+			if (stripos($p,'zeeland')!==false || $pp=='z')
+				return [ 'label'=> 'Zeeland', 'code'=> 'nl-ze', 'valid'=> true ];
+
+			if (stripos($p,'holland')!==false && (stripos($p,'noord')!==false || stripos($p,'north')!==false) || $pp=='nh')
+				return [ 'label'=> 'Noord-Holland', 'code'=> 'nl-nh', 'valid'=> true ];
+
+			if (stripos($p,'holland')!==false && (stripos($p,'zuid')!==false || stripos($p,'south')!==false) || $pp=='zh')
+				return [ 'label'=> 'Zuid-Holland', 'code'=> 'nl-zh', 'valid'=> true ];
+
+			if (stripos($p,'groningen')!==false || $pp=='gr')
+				return [ 'label'=> 'Groningen', 'code'=> 'nl-gr', 'valid'=> true ];
+
+			if (stripos($p,'drenthe')!==false || $pp=='dr')
+				return [ 'label'=> 'Drenthe', 'code'=> 'nl-dr', 'valid'=> true ];
+
+			if (stripos($p,'flevoland')!==false || $pp=='fl')
+				return [ 'label'=> 'Flevoland', 'code'=> 'nl-fl', 'valid'=> true ];
+
+			if (stripos($p,'utrecht')!==false || $pp=='ut')
+				return [ 'label'=> 'Utrecht', 'code'=> 'nl-ut', 'valid'=> true ];
+
+			if (stripos($p,'friesland')!==false || $pp=='fr')
+				return [ 'label'=> 'Friesland', 'code'=> 'nl-fr', 'valid'=> true ];
+
+			return [ 'label'=> $p, 'valid'=> false, 'code'=>null ];
+		}
+
+		public function normalizeMount( $m )
+		{
+			$m=strtolower($m);
+
+			if (stripos($m,"box")!==false)
+			{
+				return "box";
+			}
+			else
+			if (stripos($m,"drawer")!==false)
+			{
+				return "drawer";
+			}
+			else
+			{
+				return $m;
+			}			
+		}
+
+
 		private function initSumObject()
 		{
 			return [
@@ -410,7 +753,6 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 								$storageDocCountPerCollWithoutIndivCount[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
 							}
 						}
-						
 					}
 				}
 				$storageDocCountPerCollWithoutIndivCount[$bucket['key']]["box"]=$boxes;
@@ -443,7 +785,6 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 			}
 		}
-
 		
 		private function addError( $error )
 		{
@@ -466,6 +807,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				'botanie lage planten' =>  [
 					'label' => 'Lagere planten',
 					'mapping' => [ 'lagere planten' ],
+					'prepTypeKey' => null,
 					'collectionEstimatesStorageUnits' => [ '_other' => 40.30 ],
 				],
 				'entomologie' => [
@@ -494,7 +836,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					'mapping' => [ 'amphibia and reptilia' ],
 					'prepTypeKey' => 'preparationType',
 					'specimenCategoryToPrepType' => [
-						'nat'=> ['alcohol', 'formalin', 'alcohol 70%', 'glycerine', 'wet specimen', 'formalin 5%', 'alcohol-formaline' ],
+						'nat'=> [ 'alcohol', 'formalin', 'alcohol 70%', 'glycerine', 'wet specimen', 'formalin 5%', 'alcohol-formaline' ],
 						'droog' => [ 'droog', 'air dried', 'mounted skin', 'cast', 'loose bones', 'mounted skeleton', 'dry' ],
 						'_other' => [ 'alcohol & dry', '_other' ]
 					],
