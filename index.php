@@ -568,7 +568,12 @@ $(document).ready(function(e)
 		mapNavigation: { enabled: true, buttonOptions: { verticalAlign: 'bottom' } },
 		series: [{ data: dataWorldMap1, name: 'Specimens', states: { hover: { color: '#BADA55' } }, dataLabels: { enabled: true, format: '{point.name}' } }]
 	});	
-
+	
+	$('#language-menu > li').each(function()
+	{
+		var e=$(this).find('a');
+		e.attr('href','/bioportal-dashboard' + e.attr('href'));
+	});
 	
 });
 </script>
