@@ -1,3 +1,20 @@
+.invisible {
+	display:none;
+}
+
+.post-fix {
+	font-weight:normal;
+	font-size:0.9em;
+}
+
+.toggle {
+	cursor:pointer;
+}
+
+.grey {
+	color:#777;
+}
+
 table.data-table {
 	width:100%;
 }
@@ -46,7 +63,9 @@ table.data-table tr.no-item {
 	border-bottom:none;
 }
 
-
+table.data-table th.table-header {
+	text-align:center;
+}
 
 .hover-row td {
 	color:red;
@@ -131,8 +150,6 @@ div.block-content h1, h2, h3 {
 	margin-bottom: 1px;
 }
 	
-
-	
 div.block-content.big-simple-central {
 	text-align:center;
 	font-size:55px;
@@ -147,9 +164,15 @@ div.block-content.simple-central {
 }
 	
 div.block-info.big-simple-central {
+	text-align:center;
 	font-size:14px;
 	margin: 25px 35px 5px 35px;
-	line-height:1.5em;
+	line-height:1.5em;	
+}
+div.block-info.simple-central {
+	text-align:center;
+	font-size:12px;
+	margin: -5px 35px 5px 35px;
 }
 
 div.block-info.normal-central{
@@ -160,4 +183,3 @@ div.block-info.normal-central{
 	line-height:1.5em;
 	width:95%;
 }
-

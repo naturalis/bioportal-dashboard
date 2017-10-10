@@ -180,11 +180,11 @@
 			$this->queries->specimen_acceptedNamesCardinality=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "identifications", "query": { "exists" : { "field" : "identifications.scientificName.fullScientificName" } } } }, "ext" : { }, "aggs" : { "fullScientificName": { "nested": { "path": "identifications" }, "aggs": { "fullScientificName": { "cardinality" : { "field" : "identifications.scientificName.fullScientificName" }}}}}}');
 
 			$this->queries->specimen_collectionTypeCountPerGatherer=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "gatheringEvent.gatheringPersons", "query": { "exists" : { "field" : "gatheringEvent.gatheringPersons.fullName" } } } }, "ext" : { }, "aggs" : { "gatheringPersons": { "nested": { "path": "gatheringEvent.gatheringPersons" }, "aggs": { "gatheringPersons": { "terms" : { "field" : "gatheringEvent.gatheringPersons.fullName","exclude": ["Unknown","Unreadable"], "order": { "_count": "desc" }, "size": 2000 }, "aggs": { "collectionType": { "reverse_nested": {}, "aggs" : { "collectionType_count" : { "cardinality" : { "field" : "collectionType" } } } } } } } } }}');
-			$this->queries->specimen_collectionTypePerGatherer=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "gatheringEvent.gatheringPersons", "query": { "term": { "gatheringEvent.gatheringPersons.fullName": { "value": "%COLLECTOR%" } } } }}, "ext" : { }, "aggs" : { "collectionType_count" : { "terms" : { "field" : "collectionType", "size" : 20 } } } }');
+			$this->queries->specimen_collectionTypePerGatherer=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "gatheringEvent.gatheringPersons", "query": { "term": { "gatheringEvent.gatheringPersons.fullName": { "value": "%COLLECTOR%" } } } }}, "ext" : { }, "aggs" : { "collectionType_count" : { "terms" : { "field" : "collectionType", "size" : 100 } } } }');
 			$this->queries->specimen_collectionTypePerGatherer->secondary=true;
 
-			$this->queries->specimen_perScientificName=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "identifications", "query": { "bool": { "must": [ { "exists" : { "field" : "identifications.scientificName.fullScientificName" } }, { "terms": { "identifications.taxonRank": [ %SUBSPECIESETCRANKS% ] } } ] } } } }, "aggs": { "fullScientificName": { "nested": { "path": "identifications" }, "aggs": { "fullScientificName": { "terms": {"field" : "identifications.scientificName.fullScientificName", "exclude": ["?"], "size" : 15} } } } }}');
-			$this->queries->specimen_countPerCountry_NotNL=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must_not": [ { "terms": { "gatheringEvent.country": [ "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.country", "size" : 100 } } }}');
+			$this->queries->specimen_perScientificName=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "nested": { "path": "identifications", "query": { "bool": { "must": [ { "exists" : { "field" : "identifications.scientificName.fullScientificName" } }, { "terms": { "identifications.taxonRank": [ %SUBSPECIES_ETC_RANKS% ] } } ] } } } }, "aggs": { "fullScientificName": { "nested": { "path": "identifications" }, "aggs": { "fullScientificName": { "terms": {"field" : "identifications.scientificName.fullScientificName", "exclude": ["?"], "size" : 25} } } } }}');
+			$this->queries->specimen_countPerCountryWorld=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must_not": [ { "terms": { "gatheringEvent.country": [ "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.country", "size" : 100 } } }}');
 			$this->queries->specimen_countPerProvince_NL=$this->makeQueryObject($this->services->specimen, '{ "size" : 0, "query": { "bool": { "must": [ { "terms": { "gatheringEvent.country": [ %DUTCHLANDS% "Unknown" ] } } ] } }, "aggs": { "country": { "terms": {"field" : "gatheringEvent.provinceState"} } }}');
 
 			$this->queries->specimen_prepTypePerCollection=$this->makeQueryObject($this->services->specimen, '{ "size": 0, "query": {}, "aggs" : { "collections" : { "terms" : { "field" : "collectionType", "size" : 100 }, "aggs": { "prepTypes": { "terms" : { "field" : "preparationType","size": 100 } } } } } }');
@@ -209,9 +209,9 @@
 				{
 					$d = str_replace('%DUTCHLANDS%', '"' . implode('","',array_map(function($a) { return addslashes($a);} ,$this->cfg->dutchlands)). '", ',$d);
 				}
-				if (strpos($obj->query,'%SUBSPECIESETCRANKS%'))
+				if (strpos($obj->query,'%SUBSPECIES_ETC_RANKS%'))
 				{
-					$d = str_replace('%SUBSPECIESETCRANKS%', '"' . implode('","',array_map(function($a) { return addslashes($a);} ,$this->cfg->subspeciesetceteras)) . '"', $d);
+					$d = str_replace('%SUBSPECIES_ETC_RANKS%', '"' . implode('","',array_map(function($a) { return addslashes($a);} ,$this->cfg->subspeciesetceteras)) . '"', $d);
 				}
 				$this->queries->{$key}->query = $d;
 			}
@@ -234,6 +234,8 @@
 				if ( isset($obj->secondary) && $obj->secondary == true ) continue;
 				$this->queueQuery( $key, $obj );
 			}
+			
+			
 		}
 
 		private function queueQuery( $handle, $obj )
@@ -258,30 +260,34 @@
 					if ( $val->type=='aggregation' )
 						$this->data->{$key} = $this->nds->resultGetAggregations( $key );
 				}
-				
 			}
+
+			// this should be invoked based on some $obj->secondary value rather than hard-coded
+			$this->data->specimen_collectionTypeCountPerGatherer = $this->specimen_collectionTypeCountPerGatherer();
 		}
 		
 		private function specimen_collectionTypeCountPerGatherer()
 		{
 			$d=$this->nds->resultGetAggregations( "specimen_collectionTypeCountPerGatherer" );
-			
+
 			if (empty($d)) return;
 			
 			$b=[];
 
 			foreach((array)$d['gatheringPersons']['gatheringPersons']['buckets'] as $val)
 			{
-				$b[]=['collector'=>$val['key'],'collection_count'=>$val['collectionType']['collectionType_count']['value'],'collections'=>[]];
+				$b[]=['collector'=>$val['key'],'doc_count'=>$val['doc_count'],'collection_count'=>$val['collectionType']['collectionType_count']['value'],'collections'=>[]];
 			}
 			
+			/*
 			usort($b,function($a,$b)
 			{ 
 				if ($a['collection_count']==$b['collection_count']) { return $a['collector']<$b['collector']; } else { return $a['collection_count']<$b['collection_count']; }
 			});
+			*/
 			
-			$b=array_slice($b,0,10);
-
+			$b=array_slice($b,0,100);
+	
 			$c= clone $this->nds;
 			$c->setEsSever( $this->cfg->server );
 			$c->resetQueryQueue();
@@ -300,7 +306,7 @@
 			foreach((array)$b as $key=>$val)
 			{
 				$s = $c->resultGetAggregations( "specimen_gathererCollectionTypeCount_" . $key );
-			
+				$total=0;
 				foreach((array)$s['collectionType_count']['buckets'] as $val2)
 				{
 					$b[$key]['collections'][]=['collection'=>$val2['key'],'doc_count'=>$val2['doc_count']];

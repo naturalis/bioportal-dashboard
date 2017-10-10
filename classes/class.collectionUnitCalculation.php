@@ -34,8 +34,116 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		private $storageMountPerCollectionPerDutchProvince;
 		private $specimenKindOfUnitPerCollectionPerDutchProvince;
 		private $specimenPreparationTypePerCollectionPerDutchProvince;
+		private $addedStaticNumbers=['specimenNumber'=>0,'specimenCount'=>0,'storageNumber'=>0,'storageCount'=>0];
+				
 		private $provinces=[];
-	
+		private $specimenCountPerCountryWorld;
+		private $iso3166 = [
+			"Netherlands" => "NL",
+			"NETHERLANDS" => "NL",
+			"Indonesia" => "ID",
+			"France" => "FR",
+			"Papua New Guinea" => "PG",
+			"Australia" => "AU",
+			"Germany" => "DE",
+			"Brazil" => "BR",
+			"Philippines" => "PH",
+			"United States of America" => "US",
+			"Thailand" => "TH",
+			"Malaysia/Sabah" => "MY",
+			"Spain" => "ES",
+			"Cameroon" => "CM",
+			"South Africa" => "ZA",
+			"Gabon" => "GA",
+			"Switzerland" => "CH",
+			"Nederland" => "NL",
+			"Suriname" => "SR",
+			"India" => "IN",
+			"Italy" => "IT",
+			"Japan" => "JP",
+			"Algeria" => "DZ",
+			"Argentina" => "AR",
+			"Austria" => "AT",
+			"Belgium" => "BE",
+			"Benin" => "BJ",
+			"Bolivia" => "BO",
+			"Brunei" => "BN",
+			"Burundi" => "BI",
+			"Cabo Verde" => "CV",
+			"Canada" => "CA",
+			"Chile" => "CL",
+			"China" => "CN",
+			"Colombia" => "CO",
+			"Congo (Kinshasa)" => "CD",
+			"Costa Rica" => "CR",
+			"Cuba" => "CU",
+			"Denmark" => "DK",
+			"Ecuador" => "EC",
+			"Egypt" => "EG",
+			"Ethiopia" => "ET",
+			"Finland" => "FI",
+			"French Guiana" => "GF",
+			"Ghana" => "GH",
+			"Greece" => "GR",
+			"Guinea" => "GN",
+			"Guyana" => "GY",
+			"Hungary" => "HU",
+			"Ireland" => "IE",
+			"Ivory Coast" => "CI",
+			"Jamaica" => "JM",
+			"Kenya" => "KE",
+			"Liberia" => "LR",
+			"Madagascar" => "MG",
+			"Malawi" => "MW",
+			"Malaysia" => "MY",
+			"Malta" => "MT",
+			"Mexico" => "MX",
+			"Morocco" => "MA",
+			"Mozambique" => "MZ",
+			"Namibia" => "NA",
+			"New Caledonia" => "NC",
+			"New Zealand" => "NZ",
+			"Nigeria" => "NG",
+			"Norway" => "NO",
+			"Oman" => "OM",
+			"Panama" => "PA",
+			"Paraguay" => "PY",
+			"Peru" => "PE",
+			"Poland" => "PL",
+			"Portugal" => "PT",
+			"Puerto Rico" => "PR",
+			"Romania" => "RO",
+			"Solomon Islands" => "SB",
+			"Sri Lanka" => "LK",
+			"Surinam" => "SR",
+			"Sweden" => "SE",
+			"Taiwan" => "TW",
+			"Tanzania" => "TZ",
+			"Turkey" => "TR",
+			"United Kingdom" => "UK",
+			"United States" => "US",
+			"Venezuela" => "VE",
+			"Vietnam" => "VN",
+			"Yugoslavia (Former)" => "RS",
+			"U.S.A." => "US",
+			"SPAIN" => "SP",
+			"Russija" => "RU",
+			"Nederlandse Antillen" => "NL",
+			"INDONESIA" => "ID",
+			"JAPAN" => "JP",
+			"Hawaii (USA)" => "US",
+			"FRANCE" => "FR",
+			"GERMANY" => "DE",
+			"España" => "SP",
+			"Ellás" => "GR",
+			"Deutschland" => "GR",
+			"Bonaire, Saint Eustatius" => "NL",
+			"Curaçao" => "NL",
+			"Canary Islands (Spain)" => "SP",
+			"Malaysia/Sarawak" => "MY",
+			"Malaysia/Malaya" => "MY"
+		];
+		
 		
 		public function __construct()
 		{
@@ -94,6 +202,11 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$this->specimenPreparationTypePerCollectionPerDutchProvince=$data;
 		}
 
+		public function setSpecimenCountPerCountryWorld( $data )
+		{
+			$this->specimenCountPerCountryWorld=$data;
+		}
+
 		public function calculateDutchProvinceNumbers()
 		{
 			$this->provinces=[];
@@ -112,6 +225,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						$this->provinces[$p]['total']=0;
 						$this->provinces[$p]['code']=$prov['code'];
 						$this->provinces[$p]['valid']=$prov['valid'];
+						$this->provinces[$p]['doc_count']=0;
 					}
 
 					foreach($province['collections']['buckets'] as $collection)
@@ -131,6 +245,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 							$tot=($mount['doc_count'] * $avg);
 							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
 							$this->provinces[$p]['collections'][$c]['total']+=$tot;
+							//$this->provinces[$p]['doc_count']+=$mount['doc_count'];
 						}
 					}
 				}
@@ -150,6 +265,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						$this->provinces[$p]['total']=0;
 						$this->provinces[$p]['code']=$prov['code'];
 						$this->provinces[$p]['valid']=$prov['valid'];
+						$this->provinces[$p]['doc_count']=0;
 					}
 
 					foreach($province['collections']['buckets'] as $collection)
@@ -178,6 +294,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 								$tot=($unit['doc_count'] * $avg);
 								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
 								$this->provinces[$p]['collections'][$c]['total']+=$tot;
+								$this->provinces[$p]['doc_count']+=$unit['doc_count'];
 							}		
 						}
 					}
@@ -198,6 +315,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						$this->provinces[$p]['total']=0;
 						$this->provinces[$p]['code']=$prov['code'];
 						$this->provinces[$p]['valid']=$prov['valid'];
+						$this->provinces[$p]['doc_count']=0;
 					}
 
 					foreach($province['collections']['buckets'] as $collection)
@@ -216,6 +334,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 							$tot=($unit['doc_count'] * $avg);
 							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";			
 							$this->provinces[$p]['collections'][$c]['total']=$tot;
+							$this->provinces[$p]['doc_count']+=$unit['doc_count'];
 						}
 						else
 						{
@@ -227,6 +346,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 								$tot=($unit['doc_count'] * $avg);
 								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
 								$this->provinces[$p]['collections'][$c]['total']+=$tot;
+								$this->provinces[$p]['doc_count']+=$unit['doc_count'];
 							}		
 						}
 					}
@@ -286,21 +406,22 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			$grandTotal=0;
 			foreach($this->provinces as $val)
 			{
-				$grandTotal+=$val['total'];
+				//$grandTotal+=$val['total'];
+				$grandTotal+=$val['doc_count'];
 			}
 			foreach($this->provinces as $key=>$val)
 			{
-				$this->provinces[$key]['percentage']=round(($val['total'] / $grandTotal) * 100,2);
+				//$this->provinces[$key]['percentage']=round(($val['total'] / $grandTotal) * 100,2);
+				$this->provinces[$key]['percentage']=round(($val['doc_count'] / $grandTotal) * 100,2);
 			}
 
 			$dir='desc';
 			$field='total';
+			$field='doc_count';
 			uasort ($this->provinces, function ($a, $b) use ($field,$dir)
 			{
 			   return ($dir!='desc' ? 1 : -1) * ($a[$field] - $b[$field]);
 			});
-			
-			
 			
 			return $this->provinces;
 		}
@@ -449,10 +570,26 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 				if ( isset($p['label']) ) $this->collectionUnitEstimates[$c][$p['label']];
 			}
 			
-			if ( isset($p['specimenNumber']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_number'] += $p['specimenNumber'];
-			if ( isset($p['specimenCount']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_estimated_sum'] += $p['specimenCount'];
-			if ( isset($p['storageNumber']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_number'] += $p['storageNumber'];
-			if ( isset($p['storageCount']) ) $this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_sum'] += $p['storageCount'];
+			if ( isset($p['specimenNumber']) ) 
+			{
+				$this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_number'] += $p['specimenNumber'];
+				$this->addedStaticNumbers['specimenNumber'] += $p['specimenNumber'];
+			}
+			if ( isset($p['specimenCount']) ) 
+			{
+				$this->collectionUnitEstimates[$c]['storageRecordsWithoutIndividualCount_estimated_sum'] += $p['specimenCount'];
+				$this->addedStaticNumbers['specimenCount'] += $p['specimenCount'];
+			}
+			if ( isset($p['storageNumber']) ) 
+			{
+				$this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_number'] += $p['storageNumber'];
+				$this->addedStaticNumbers['storageNumber'] += $p['storageNumber'];
+			}
+			if ( isset($p['storageCount']) )
+			{
+				$this->collectionUnitEstimates[$c]['storageRecordsWithIndividualCount_sum'] += $p['storageCount'];
+				$this->addedStaticNumbers['storageCount'] += $p['storageCount'];
+			}
 
 			//q($this->collectionUnitEstimates,1);
 		}
@@ -694,7 +831,34 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			}			
 		}
 
+		public function calculateWorldNumbers()
+		{
+			$this->countriesToIso3166();
+			$this->retranslateIsoCodes();
+			$this->sortWorldNumbers();
+		}
 
+		public function sortWorldNumbers( $field='label', $dir='asc' )
+		{
+			usort($this->iso3166DocCount, function($a, $b) use ($field, $dir)
+			{ 
+				return ($dir=='asc' ? ($b[$field] < $a[$field]) : ($b[$field] > $a[$field]) );
+				return 0;
+			});
+		}
+				
+		public function getWorldNumbers()
+		{
+			return $this->iso3166DocCount;
+		}
+				
+		public function getAddedStaticNumbers()
+		{
+			return $this->addedStaticNumbers;
+		}
+	
+				
+				
 		private function initSumObject()
 		{
 			return [
@@ -785,7 +949,37 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 			}
 		}
-		
+
+		private function countriesToIso3166()
+		{
+			foreach($this->specimenCountPerCountryWorld as $key=>$bucket)
+			{
+				if(isset($this->iso3166[$bucket['key']]))
+				{
+					$code=$this->iso3166[$bucket['key']];
+					if (isset($this->iso3166DocCount[$code]))
+					{
+						$this->iso3166DocCount[$code]['doc_count']+=$bucket['doc_count'];
+					}
+					else
+					{
+						$this->iso3166DocCount[$code]['doc_count']=$bucket['doc_count'];
+						$this->iso3166DocCount[$code]['label']=$this->iso3166DocCount[$code]['iso_code']=$code;
+					}
+				}
+			}
+			
+			$this->iso3166DocCount = array_values($this->iso3166DocCount);
+		}
+				
+		private function retranslateIsoCodes()
+		{
+			foreach($this->iso3166DocCount as $key=>$val)
+			{
+				$this->iso3166DocCount[$key]['label']=array_search($val['iso_code'],$this->iso3166);
+			}
+		}
+
 		private function addError( $error )
 		{
 			$this->errors[]=$error;

@@ -1,16 +1,12 @@
 <?php
-//http://localhost/bioportal-dashboard/?forceDataRefresh
+
+	// force refresh: /bioportal-dashboard/?forceDataRefresh
+
 	/*
 		to do:
-		change block titles and add explanaroty texts
-		dutch map that actually works
-		use same map-class for world & nl (and introduce tooltips etc.)
 		separate sections for siebld & dubois
 		specimen tree (based on CoL taxonomy, greyed out when no specimen, tooltip for speciment lists)
 		complete taxonrank list for "what constitutes a (sub)species?"
-		re-examine collectors (odd behaviour when only one or two collections)
-		storage units!
-		add legends to graphs
 		post-processing:harmonize countries
 			logical collection-groupings
 			harmonize collectors' names (but how?)
@@ -21,16 +17,8 @@
 			something useful that can be expressed in a bar chart
 			something useful that can be expressed in a radar plot (because they are cool)
 	*/
-	
-	function q( $d, $die=false ) 
-	{
-		echo'<pre>';
-		print_r( $d );
-		echo'</pre>';
-		if ($die) die();
-	}
-	
-	
+
+
 	include_once("classes/class.ndsInterface.php");
 	include_once("classes/class.ndsDataHarverster.php");
 	include_once("classes/class.dataCache.php");
@@ -38,12 +26,13 @@
 	include_once("classes/class.contentBlocks.php");
 	include_once("classes/class.collectionUnitCalculation.php");
 
-	include_once("config/cfg.iso3166.php");
+	include_once("config/translations.php");
 	include_once("config/settings.php");
 	
 	$esServer=config::elasticsearchAddress();
-	$bpHomePage=config::bioportalHomepage();
+	$bpRootUrl=config::bioportalRootUrl();
 	$dbAccess=config::databasAccessParameters();
+	$urls=config::searchUrls();
 
 	// ?forceDataRefresh forces, well, data refresh (and re-caching)
 	$forceDataRefresh = (isset($_REQUEST["forceDataRefresh"]));
@@ -53,12 +42,6 @@
 	{
 		if ($force) return true;
 		return false;
-	}
-
-	// map to drupal translations?
-	function __( $text )
-	{
-		return $text;
 	}
 
 	function formatNumber( $number, $decimals=0 )
@@ -118,29 +101,32 @@
 			'specimenCount' => ( isset($val['specimenNumber']) ? ($val['specimenNumber'] * $val['average']) : 0 ),
 		] );	
 	}
-
+	
+	$getAddedStaticNumbers = $calculator->getAddedStaticNumbers();
 	
 	// calculating totals
 	$calculator->runCalculations();
 	$calculator->roundEstimates();
 	$calculator->sortCategoryBuckets();
-	
 	$collectionUnitEstimates=$calculator->getCollectionUnitEstimates();
 	$grandUnitsTotal=$calculator->getGrandUnitsTotal();
 	$categoryBuckets=$calculator->getCategoryBuckets();
-
-	//q($calculator->getErrors());
-
 
 	// calculating provinces
 	$calculator->setStorageMountPerCollectionPerDutchProvince( $data->storage_netherlandsCollectionMount['provinces']['buckets'] );
 	$calculator->setSpecimenKindOfUnitPerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionKindOfUnit['provinces']['buckets'] );
 	$calculator->setSpecimenPreparationTypePerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionPreparationType['provinces']['buckets'] );
-
 	$calculator->calculateDutchProvinceNumbers();
 	$calculator->aggregateDutchProvinceNumbers();
 	$provinces=$calculator->getDutchProvinceNumbers();
 
+	// calculating world
+	$calculator->setSpecimenCountPerCountryWorld( $data->specimen_countPerCountryWorld['country']['buckets'] );
+	$calculator->calculateWorldNumbers();
+	$calculator->sortWorldNumbers( 'doc_count', 'desc' );
+	$world=$calculator->getWorldNumbers();
+	
+	
 	ob_start();
 
 ?>
@@ -164,24 +150,26 @@ var colors=[];
 	define("CLASS_ONE_THIRD","one-third");
 	define("CLASS_TWO_THIRD","two-third");
 	
+
 	$c = new contentBlocks;
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
-			"title" => __("Collection specimens count"), "main" => formatNumber( $grandUnitsTotal ),
-			"subscript" => __("objects in total"), 
-			"info" => __( "registered  in the Netherlands Biodiversity API as " . formatNumber($data->specimen_totalCount) . " registration units and  " . formatNumber($data->storage_catNumberCardinality['catalogNumber_count']['value']) . " storage units (NEED TO ADD BRAHMS NUMBER)" ) ]
+			"title" => __("Specimen count"), "main" => formatNumber( $grandUnitsTotal ),
+			"subscript" => __("specimens"), 
+			"info" => __( "registered  in the Netherlands Biodiversity API as " . formatNumber($data->specimen_totalCount) . " specimen records and  " . formatNumber($data->storage_catNumberCardinality['catalogNumber_count']['value']+$getAddedStaticNumbers['storageNumber']) . " storage units." )
+		]
 	);
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => __("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => __("records in total"), "info" => __("The number of taxon records in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.") ]
+		[ "title" => __("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => __("taxa"), "info" => __("registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.") ]
 	);
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => __("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => __("records in total"), "info" => __("The number of multimedia records in the Netherlands Biodiversity API data store.") ]
+		[ "title" => __("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => __("multimedia records"), "info" => __("registered in the Netherlands Biodiversity API data store, consisting of  specimen images from the collection and taxon photo's from Dutch Species Register.") ]
 	);
 
 	echo $c->getBlockRow();
@@ -200,15 +188,11 @@ var colors=[];
 		{
 			$buffer[] = '</table><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 		}
-		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . '</td><td class="number">' .
-//			formatNumber( $bucket['specimenUnit_count'] ) .' / '. 
-			formatNumber( $bucket['totalUnit_sum'] ) 
-
-			. '</td></tr>';
+		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( __( isset($bucket['label']) ? $bucket['label'] : $key ) ) .
+					'</td><td class="number">' . formatNumber( $bucket['totalUnit_sum'] ) . '</td></tr>';
 	}
 	
 	$buffer[]='</table></div>';
-
 	$buffer[]='<div style="display:inline-block;vertical-align:top;margin:5px 0 0 50px;"><canvas style="width:289px;height:289px;" id="specimen_perCollectionTypeChart"></canvas></div>';
 	
 	$c->makeBlock(
@@ -216,8 +200,6 @@ var colors=[];
 		[ "title" => __("Collection categories by specimen count"), "main" => implode("\n",$buffer) ]
 	);
 	
-	/* ------------------------------------------------------------------------------------------------------------------------ */
-
 
 	echo $c->getBlockRow();	
 
@@ -237,32 +219,31 @@ var colors=[];
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "normal-central"  ],
-		[ "title" => __("Number of taxa per rank"), "main" => implode("\n",$buffer), "info" => __( "Breakdown of taxa per rank in the taxon index. The index does not contain individual records for higher taxa." )  ]
+		[ "title" => __("Number of taxa per rank"), "main" => implode("\n",$buffer), "info" => __( "Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level." )  ]
 	);
-
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
 			"title" => __("Unique scientific names with specimen"), "main" => formatNumber( $data->specimen_acceptedNamesCardinality['fullScientificName']['fullScientificName']['value']  ),
-			"subscript" => __("unique scientific names"), 
-			"info" => __( "Number of unique full scientific names registered for NBA specimens." ) ]
+			"subscript" => __("full scientific names"), 
+			"info" => __( "Number of unique full scientific names registered as identification for NBA specimen records." ) ]
 	);
 
 
 	$buffer=[];
-	$buffer[]='<h3>Number of unique vernacular names</h3>';
-	$buffer[]='<h1>'.formatNumber( $data->taxon_vernacularNamesCardinality['vernacularName']['vernacularName']['value'] ) . '</h1>';
-
 	$buffer[]='<h3>Number of unique accepted names</h3>';
 	$buffer[]='<h1>'.formatNumber( $data->taxon_acceptedNamesCardinality['acceptedName']['value'] ) . '</h1>';
         
 	$buffer[]='<h3>Number of unique synonyms</h3>';
 	$buffer[]='<h1>' . formatNumber( $data->taxon_synonymCardinality['synonym']['synonym']['value'] ) . '</h1>';
 	
+	$buffer[]='<h3>Number of unique vernacular names</h3>';
+	$buffer[]='<h1>'.formatNumber( $data->taxon_vernacularNamesCardinality['vernacularName']['vernacularName']['value'] ) . '</h1>';
+
 	$c->makeBlock(
-		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central" ],
-		[ "title" => __("Name count"), "main" => implode("\n", $buffer), "info" => "Numbers of unique names in the NBA taxon index" ]
+		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central", "info" => "simple-central" ],
+		[ "title" => __("Name count"), "main" => implode("\n", $buffer), "info" => "Numbers of unique names registered in the NBA taxon index" ]
 	);
 
 	echo $c->getBlockRow();
@@ -283,6 +264,7 @@ var colors=[];
 	$buffer[]='<div style="display:inline-block;margin-bottom:-25px;">';
 	$buffer[]='<table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 	$i=0;
+	$x=0;
 	foreach((array)$provinces as $province=>$numbers)
 	{
 		if ($numbers['valid']!==true) continue;
@@ -292,20 +274,54 @@ var colors=[];
 		}
 		$buffer[] = '<tr class="data-row">
 				<td class="data-cell">' .  $province . '</td>
-				<td class="number">' . formatNumber( $numbers['total'] ) . '</td>
+				<td class="number">' . formatNumber( $numbers['doc_count'] ) . '</td>
 				<td class="number" style="width:20px">(' . $numbers['percentage'] . '%)</td>
 			</tr>';
+			$x+=$numbers['doc_count'];
 	}
 	
 	$buffer[]='</table></div>';
-	
 
 	$c->makeBlock(
 		[ "cell" => CLASS_TWO_THIRD, "main" => "simple-central", "info" => "normal-central" ],
-		[ "title" => __("Specimens per Dutch province"), "main" => implode("\n", $buffer), "info" => "Number of specimens per Dutch province.<br />MUST ADD FIXED NUMBERS" ]
+		[ "title" => __("Specimen records per Dutch province"), "main" => implode("\n", $buffer), "info" => "Number of registered specimen records per Dutch province." ]
 	);
 
 	echo $c->getBlockRow();
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	$countryCutOff=10;
+	
+	$buffer=[];
+	$buffer[]='<div style="display:inline-block;margin-bottom:-55px;">';
+	$buffer[]='<table class="data-table" style="width:340px;float:left;margin-left:15px;margin-right:25px;">';
+
+	
+	$buffer[] = '<tr><th colspan=2" class="table-header">Country top '.$countryCutOff.'</th></tr>';
+	
+	$i=0;
+	foreach((array)$world as $country)
+	{
+		if ($country['label']=='Netherlands') continue;
+		if ($i++>=$countryCutOff) break; 
+		$buffer[] = '<tr><td>' . $country['label'] . '</td><td class="number">' . formatNumber( $country['doc_count'] ) . '</td></tr>';
+	}
+
+	$buffer[]='</table></div>';	
+	$buffer[]='<div id="worldMap1" style="width: 650px; height: 400px; float:right;margin:0 20px 0 60px;"></div>';	
+
+
+	$c->makeBlock(
+		[ "cell" => CLASS_FULL, "main" => "simple-central", "info" => "normal-central" ],
+		[
+			"title" => __("Registered specimen records per country (without The Netherlands)"),
+			"main" => implode("\n", $buffer), 
+			"info" => ""
+		]
+	);
+
+	echo $c->getBlockRow();	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -343,7 +359,7 @@ var colors=[];
 		[
 			"title" => __("Type status records per collection"),
 			"main" => implode("\n", $buffer), 
-			"info" => "Displayed above are the six sub-collections, top-most in terms of the total number of specimens with a type status,<br />plus the five most frequently occurring type statuses in that sub-collection."
+			"info" => "The six top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the five most frequently occurring type statuses in that sub-collection."
 		]
 	);
 
@@ -351,139 +367,86 @@ var colors=[];
 
 	echo $c->getBlockRow();
 	
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	$namesToSkip=['Gen. indet. sp. indet.','GEN.INDET. SP.INDET.'];
+	$buffer=[];
+	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
+	$i=0;
+	foreach((array)$data->specimen_perScientificName['fullScientificName']['fullScientificName']['buckets'] as $bucket)
+	{
+		$name=$bucket['key'];
+		if (in_array($name,$namesToSkip)) continue;
+		if ($i++>20) break;
+		
+		$buffer[]='<tr><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchAdvancedSpecimen,$name).'">' . $name . '</a></td><td class="number">' . formatNumber( $bucket['doc_count'] ) . '</td></tr>';
+	}
+	$buffer[]='</table>';	
+	$c->makeBlock(
+		[ "cell" => CLASS_TWO_THIRD, "main" => "big-simple-central", "info" => "normal-central" ],
+		[
+			"title" => __("Most collected (sub)species"),
+			"main" => implode("\n", $buffer), 
+			"info" => "Top 20 of the most collected species or subspecies, measured by number of registered specimen records."
+		]
+	);
+
+	$buffer=[];
+	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
+	$i=0;
+	foreach($data->specimen_collectionTypeCountPerGatherer as $key=>$val)
+	{
+		if (strpos($val['collector'],'Stud bio')===0) continue;
+		if ($i++>=15) break;
+		
+		if (substr_count($val['collector'],",")==1)
+		{
+			$collectorname=explode(", ", $val['collector'], 2);
+			$collectorname=trim($collectorname[1]) . ' ' . trim($collectorname[0]);
+		}
+		else
+		{
+			$collectorname=$val['collector'];
+		}
+		
+		$buffer[]='
+			<tr class="main-item">
+				<td colspan="2" onclick="$(\'.list'.$key.'\').toggle();" class="toggle">' . 
+					'<span>' .$collectorname . '</span><br />
+					<span class="list' . $key . ' grey">&#9660;</span>
+					<span class="list' . $key . ' grey invisible">&#9650;</span>					
+					<span class="post-fix">' . formatNumber( $val['doc_count'] ) . ' registered specimens in ' . $val['collection_count'] . ' collection' . ($val['collection_count']>1 ? 's' : '') . '</span>
+				</td>
+			</tr>';
+
+		foreach((array)$val['collections'] as $key2=>$collection)
+		{
+			//if ($key2>=5) break;
+			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( __($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
+		}
+	}	
+
+	$buffer[]='</table>';	
+
+	
+	$c->makeBlock(
+		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "normal-central" ],
+		[
+			"title" => __("Top 15 collectors"),
+			"main" => implode("\n", $buffer), 
+			"info" => "Top 15 collectors having the most specimen records registered to their name, plus the collections they've contributed to."
+		]
+	);
+
+	echo $c->getBlockRow();
+
 	echo '<br clear="all" />';
-
-/*
-			
-	<br clear="all" />
-
-    <div id="r2">
-
-        <div class="left-float">
-            <?php $countryCutOff=20; ?>
-    
-            <table class="normal-table">
-                <tr><th colspan="2">specimen_countPerCountry_NotNL (top <?php echo $countryCutOff; ?>)</th></tr>
-                <?php
-                    $codes=[];
-                    foreach((array)$data->specimen_countPerCountry_NotNL['country']['buckets'] as $key=>$bucket)
-                    {
-                        if(isset($iso3166[$bucket['key']]))
-                        {
-                            $code=$iso3166[$bucket['key']];
-                            if (isset($codes[$code]))
-                                $codes[$code]+=$bucket['doc_count'];
-                            else
-                                $codes[$code]=$bucket['doc_count'];
-                        }
-    
-                        if ($key==0 || $key>$countryCutOff) continue; 
-                        echo '<tr><td>' . $bucket['key'] . '</td><td class="number">' . $bucket['doc_count'] . '</td></tr>';
-                    }
-                ?>
-            </table>
-        </div>
-    
-        <div class="left-float">
-            <table class="wide-table no-color">
-                <tr><td><div id="specimen_countPerCountry_NotNL" style="width:600px; height:425px;"></div></td></tr>
-            </table>
-            <script>
-            <?php
-            foreach((array)$codes as $code=>$count)
-            {
-                echo "countryData." . strtolower($code) .'=' . $count . "\n";
-            }
-            ?>
-            </script>                
-		</div>
-	</div>
-
-    <br clear="all" />
-
-    <div id="r2-5">
-
-        <div class="half-width text-block">
-            some info
-        </div>
-            
-        <div class="half-width text-block">
-            some info
-        </div>
-        
-	</div>
-        
-    <br clear="all" />
-
-    <div id="r3">
-
-        <div class="left-float">
-            <table class="normal-table wide-table">
-                <tr><th colspan="2">specimen_perScientificName (top 15)<br />(sub)species only</th></tr>
-                <?php
-                
-                    foreach((array)$data->specimen_perScientificName['fullScientificName']['fullScientificName']['buckets'] as $bucket)
-                    {
-                        echo '<tr><td>' . $bucket['key'] . '</td><td class="number">' . $bucket['doc_count'] . '</td></tr>';
-                    }
-                ?>
-            </table>
-        </div>
-
-    </div>
-    
-    <br clear="all" />
-
-    <div id="r4">
-
-
-
-        <div class="left-float">
-            <table class="double-table">
-                <tr><th colspan="2">specimen_collectionTypeCountPerGatherer<br />(top 10)</th></tr>
-                <?php
-                
-                    foreach((array)$data->specimen_collectionTypeCountPerGatherer as $key=>$collector)
-                    {
-                        echo '
-                            <tr class="main-item">
-                                <td colspan="2" onclick="$(\'.list'.$key.'\').toggle();" class="toggle">' . 
-                                    '<span class="main-item">' . $collector['collector'] . '</span> (<span class="number">' . $collector['collection_count'] . '</span> collections)
-                                </td>
-                            </tr>';
-                        
-                        foreach((array)$collector['collections'] as $collection)
-                        {
-                            echo '<tr class="sub-item invisible list'.$key.'"><td>' . $collection['collection'] . '</td><td class="number">' . $collection['doc_count'] . '</td></tr>';
-            
-                        }
-                    }				
-                ?>
-            </table>
-        </div>
-
-        <div class="left-float">
-            <table class="no-color">
-                <tr><th>BioPortal</th></tr>
-                <tr><td>
-Het BioPortal toont de kracht van de NBA. Het is een “klant” van de NBA, een voorbeeldapplicatie die de gegevens uit de NBA via een webportaal toegankelijk maakt. Via dit portaal kan iedereen, geïnteresseerde of wetenschapper, in de gegevensbronnen van Naturalis grasduinen, met simpele zoekopdrachten, via complexe queries of op basis van specifieke geografische locaties.
-                </td></tr>
-                <tr><td class="info"><a href="/">BioPortal</a></td></tr>
-            </table>
-        </div>
-        
-    </div>
-
-	
-	
-
-
-*/
  
 	$buffer=ob_get_clean();
 
 	$w = new webPageStealer;
-	$w->setUrl( $bpHomePage );
+	$w->setUrl( $bpRootUrl );
 	$w->stealPage();
 	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"] ] );
 	echo $w->getNewPage();
@@ -491,16 +454,16 @@ Het BioPortal toont de kracht van de NBA. Het is een “klant” van de NBA, een
 ?>	
 
 <div style="display:none" id="data_buffer">
-<form method=post><input type=submit value=forceRefresh><input type=hidden name=forceDataRefresh></post>
+<!-- form method=post><input type=submit value=forceRefresh><input type=hidden name=forceDataRefresh></post -->
 <?php echo $buffer; ?>
 </div>
 
 <script src="js/highcharts/highmaps.js"></script>
-<script src="js/highcharts/modules/exporting.js"></script>
+<script src="js/highcharts/exporting.js"></script>
 <script src="js/highcharts/nl-all.js"></script>
+<script src="js/highcharts/world-robinson.js"></script>
 
 <script>
-
 
 String.prototype.reverse = function() {	
 	var o = '';
@@ -524,7 +487,7 @@ $(document).ready(function(e)
 	{
 		echo "specimen_perCollectionTypeData.data.push('" . $bucket['totalUnit_sum']. "');\n";
 		echo "specimen_perCollectionTypeData.colors.push(defaultColors[".$i++."]);\n";
-		echo "specimen_perCollectionTypeData.labels.push('" . ucfirst( isset($bucket['label']) ? $bucket['label'] : $key ) . "');\n";
+		echo "specimen_perCollectionTypeData.labels.push('" . ucfirst( __( isset($bucket['label']) ? $bucket['label'] : $key ) ) . "');\n";
 	}
 
 ?>
@@ -535,16 +498,10 @@ $(document).ready(function(e)
 			"type":"doughnut",
 			"data": {
 				"labels": specimen_perCollectionTypeData.labels,
-				"datasets": [
-					{"label":"Collection types","data":specimen_perCollectionTypeData.data,"backgroundColor":specimen_perCollectionTypeData.colors}
-				]
+				"datasets": [ {"label":"Collection types","data":specimen_perCollectionTypeData.data,"backgroundColor":specimen_perCollectionTypeData.colors} ]
 			},
 			"options" : {
-				"legend" : {
-					"display" : false,
-					"position" : "left",
-					"fullWidth" : true
-				},
+				"legend" : { "display" : false, "position" : "left", "fullWidth" : true },
 				"events": ["mousemove", "mouseout"],
 				"onHover" : function(chart,area,fu) { 
 					if (area[0]) 
@@ -560,9 +517,7 @@ $(document).ready(function(e)
 						});
 					}
 				},
-				"animation" : {
-					"animateRotate" : false
-				}
+				"animation" : { "animateRotate" : false }
 			}
 		});
 	
@@ -579,60 +534,30 @@ $(document).ready(function(e)
 		e.stopPropagation();
 	});	
 	
-/*
-	var c1 = document.getElementById('specimen_perCollectionType').getContext('2d');
-	var specimen_perCollectionTypeChart = new Chart(c1).Pie(specimen_perCollectionTypeData, { animation: false });
 
-	var c2 = document.getElementById('specimen_countPerProvince_NL').getContext('2d');
-	var specimen_countPerProvince_NLChart = new Chart(c2).Pie(specimen_countPerProvince_NLData	,{ animation: false });
-*/
-//	https://jqvmap.com/
-//	https://github.com/manifestinteractive/jqvmap
-
-
-
-
-	// Prepare demo data
-	// Data is joined to map using value of 'hc-key' property by default.
 	// See API docs for 'joinBy' for more info on linking data and map.
 	// https://code.highcharts.com/
-	var data = [
-	<?php foreach($provinces as $val) { echo  "['".$val['code']."', ".$val['total']."],\n"; } ?>
+	var dataDutchMap1 = [
+	<?php foreach($provinces as $val) { echo  "['".$val['code']."', ".$val['doc_count']."],\n"; } ?>
 	];
 
-	// Create the chart
 	Highcharts.mapChart('dutchMap1', {
-		chart: { map: 'countries/nl/nl-all' },
-		title: { text: '' },
-		subtitle: { text: '' },
-		mapNavigation: { enabled: false },
-		colorAxis: { min: 0 },
-		series: [{
-			data: data,
-			name: 'Specimens',
-			states: { hover: { color: '#BADA55' } },
-			dataLabels: { enabled: true, format: '{point.name}' }
-		}]
+		chart: { map: 'countries/nl/nl-all' }, mapNavigation: { enabled: false }, colorAxis: { min: 0 }, title: { text: '' },
+		series: [{ data: dataDutchMap1, name: 'Specimens', states: { hover: { color: '#BADA55' } }, dataLabels: { enabled: true, format: '{point.name}' } }]
 	});	
 
-	
-	
-	
+	var dataWorldMap1 = [
+	<?php foreach($world as $country) { 
+			if ($country['label']=='Netherlands') continue;
+			echo  "['".strtolower($country['iso_code'])."', ".$country['doc_count']."],\n"; } ?>
+	];
 
-	jQuery('#specimen_countPerCountry_NotNL').vectorMap({
-		map: 'world_en',
-		backgroundColor: null,
-		color: '#ffffff',
-		hoverOpacity: 0.7,
-		selectedColor: '#666666',
-		enableZoom: true,
-		showTooltip: true,
-		values: countryData,
-		scaleColors: ['#C8EEFF', '#006491'],
-		normalizeFunction: 'polynomial',
-	});
-	
-	
+	Highcharts.mapChart('worldMap1', {
+		chart: { map: 'custom/world-robinson' }, mapNavigation: { enabled: false }, colorAxis: { min: 0 }, title: { text: '' },	
+		mapNavigation: { enabled: true, buttonOptions: { verticalAlign: 'bottom' } },
+		series: [{ data: dataWorldMap1, name: 'Specimens', states: { hover: { color: '#BADA55' } }, dataLabels: { enabled: true, format: '{point.name}' } }]
+	});	
+
 	
 });
 </script>
