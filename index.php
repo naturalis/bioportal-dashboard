@@ -25,6 +25,7 @@
 	include_once("classes/class.webPageStealer.php");
 	include_once("classes/class.contentBlocks.php");
 	include_once("classes/class.collectionUnitCalculation.php");
+	include_once("classes/class.translator.php");
 
 	include_once("config/translations.php");
 	include_once("config/settings.php");
@@ -34,8 +35,9 @@
 	$dbAccess=config::databasAccessParameters();
 	$urls=config::searchUrls();
 
-	// ?forceDataRefresh forces, well, data refresh (and re-caching)
+	// ?forceDataRefresh forces data refresh (and re-caching)
 	$forceDataRefresh = (isset($_REQUEST["forceDataRefresh"]));
+	$language = (isset($_REQUEST["language"]) ? $_REQUEST["language"] : 'nl' );
 
 	// needs actual database check
 	function needFreshData( $force )
@@ -49,6 +51,11 @@
 		return number_format( $number, $decimals, ",", ".");
 	}
 
+	
+	
+	$translator= new Translator;
+	$translator->setLanguage( $language );
+	
 	$cache=new dataCache;
 	$cache->setDbParams( $dbAccess );
 	$cache->setProject( "nba_data" );
@@ -156,20 +163,20 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
-			"title" => __("Specimen count"), "main" => formatNumber( $grandUnitsTotal ),
-			"subscript" => __("specimens"), 
-			"info" => __( "registered  in the Netherlands Biodiversity API as " . formatNumber($data->specimen_totalCount) . " specimen records and  " . formatNumber($data->storage_catNumberCardinality['catalogNumber_count']['value']+$getAddedStaticNumbers['storageNumber']) . " storage units." )
+			"title" => $translator->translate("Specimen count"), "main" => formatNumber( $grandUnitsTotal ),
+			"subscript" => $translator->translate("specimens"), 
+			"info" => sprintf( $translator->translate( "registered in the Netherlands Biodiversity API as %s specimen records and %s storage units."),formatNumber($data->specimen_totalCount),(formatNumber($data->storage_catNumberCardinality['catalogNumber_count']['value']+$getAddedStaticNumbers['storageNumber']) ) )
 		]
 	);
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => __("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => __("taxa"), "info" => __("registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.") ]
+		[ "title" => $translator->translate("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => $translator->translate("taxa"), "info" => $translator->translate("registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.") ]
 	);
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => __("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => __("multimedia records"), "info" => __("registered in the Netherlands Biodiversity API data store, consisting of  specimen images from the collection and taxon photo's from Dutch Species Register.") ]
+		[ "title" => $translator->translate("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => $translator->translate("multimedia records"), "info" => $translator->translate("registered in the Netherlands Biodiversity API, consisting of  specimen images from the collection and taxon photo's from Dutch Species Register.") ]
 	);
 
 	echo $c->getBlockRow();
@@ -188,7 +195,7 @@ var colors=[];
 		{
 			$buffer[] = '</table><table class="data-table" style="width:325px;float:left;margin-right:25px;">';
 		}
-		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( __( isset($bucket['label']) ? $bucket['label'] : $key ) ) .
+		$buffer[] = '<tr class="data-row"><td class="data-cell">' . ucfirst( $translator->translate( isset($bucket['label']) ? $bucket['label'] : $key ) ) .
 					'</td><td class="number">' . formatNumber( $bucket['totalUnit_sum'] ) . '</td></tr>';
 	}
 	
@@ -197,7 +204,7 @@ var colors=[];
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_FULL, "info" => "normal-right-aligned" ],
-		[ "title" => __("Collection categories by specimen count"), "main" => implode("\n",$buffer) ]
+		[ "title" => $translator->translate("Collection categories by specimen count"), "main" => implode("\n",$buffer) ]
 	);
 	
 
@@ -219,31 +226,31 @@ var colors=[];
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "normal-central"  ],
-		[ "title" => __("Number of taxa per rank"), "main" => implode("\n",$buffer), "info" => __( "Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level." )  ]
+		[ "title" => $translator->translate("Number of taxa per rank"), "main" => implode("\n",$buffer), "info" => $translator->translate( "Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level." )  ]
 	);
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
-			"title" => __("Unique scientific names with specimen"), "main" => formatNumber( $data->specimen_acceptedNamesCardinality['fullScientificName']['fullScientificName']['value']  ),
-			"subscript" => __("full scientific names"), 
-			"info" => __( "Number of unique full scientific names registered as identification for NBA specimen records." ) ]
+			"title" => $translator->translate("Unique scientific names with specimens"), "main" => formatNumber( $data->specimen_acceptedNamesCardinality['fullScientificName']['fullScientificName']['value']  ),
+			"subscript" => $translator->translate("full scientific names"), 
+			"info" => $translator->translate( "Number of unique full scientific names registered as identification for NBA specimen records." ) ]
 	);
 
 
 	$buffer=[];
-	$buffer[]='<h3>Number of unique accepted names</h3>';
+	$buffer[]='<h3>'.$translator->translate("Number of unique accepted names").'</h3>';
 	$buffer[]='<h1>'.formatNumber( $data->taxon_acceptedNamesCardinality['acceptedName']['value'] ) . '</h1>';
         
-	$buffer[]='<h3>Number of unique synonyms</h3>';
+	$buffer[]='<h3>'.$translator->translate("Number of unique synonyms").'</h3>';
 	$buffer[]='<h1>' . formatNumber( $data->taxon_synonymCardinality['synonym']['synonym']['value'] ) . '</h1>';
 	
-	$buffer[]='<h3>Number of unique vernacular names</h3>';
+	$buffer[]='<h3>'.$translator->translate("Number of unique vernacular names").'</h3>';
 	$buffer[]='<h1>'.formatNumber( $data->taxon_vernacularNamesCardinality['vernacularName']['vernacularName']['value'] ) . '</h1>';
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central", "info" => "simple-central" ],
-		[ "title" => __("Name count"), "main" => implode("\n", $buffer), "info" => "Numbers of unique names registered in the NBA taxon index" ]
+		[ "title" => $translator->translate("Name count"), "main" => implode("\n", $buffer), "info" => $translator->translate( "Number of unique names registered in the NBA taxon index." ) ]
 	);
 
 	echo $c->getBlockRow();
@@ -256,7 +263,7 @@ var colors=[];
 	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central" ],
-		[ "title" => __("Specimens per Dutch province"), "main" => implode("\n", $buffer) ]
+		[ "title" => $translator->translate("Specimens per Dutch province"), "main" => implode("\n", $buffer) ]
 	);
 	
 
@@ -284,7 +291,7 @@ var colors=[];
 
 	$c->makeBlock(
 		[ "cell" => CLASS_TWO_THIRD, "main" => "simple-central", "info" => "normal-central" ],
-		[ "title" => __("Specimen records per Dutch province"), "main" => implode("\n", $buffer), "info" => "Number of registered specimen records per Dutch province." ]
+		[ "title" => $translator->translate("Specimen records per Dutch province"), "main" => implode("\n", $buffer), "info" => $translator->translate("Number of registered specimen records per Dutch province.") ]
 	);
 
 	echo $c->getBlockRow();
@@ -298,7 +305,7 @@ var colors=[];
 	$buffer[]='<table class="data-table" style="width:340px;float:left;margin-left:15px;margin-right:25px;">';
 
 	
-	$buffer[] = '<tr><th colspan=2" class="table-header">Country top '.$countryCutOff.'</th></tr>';
+	$buffer[] = '<tr><th colspan=2" class="table-header">' .  sprintf( $translator->translate("Country top %s"), $countryCutOff ).'</th></tr>';
 	
 	$i=0;
 	foreach((array)$world as $country)
@@ -315,7 +322,7 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_FULL, "main" => "simple-central", "info" => "normal-central" ],
 		[
-			"title" => __("Registered specimen records per country (without The Netherlands)"),
+			"title" => $translator->translate("Registered specimen records per country (without The Netherlands)"),
 			"main" => implode("\n", $buffer), 
 			"info" => ""
 		]
@@ -325,6 +332,8 @@ var colors=[];
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	$maxShow_collections=6;
+	$maxShow_typeStatuses=5;
 	$buffer=[];
 	$buffer[]='<div style="display:inline-block;margin-bottom:-55px;">';
 	$buffer[]='<table class="data-table" style="width:340px;float:left;margin-left:15px;margin-right:25px;">';
@@ -335,7 +344,7 @@ var colors=[];
 	$i=0;
 	foreach((array)$b as $collectionType)
 	{
-		$buffer[]='<tr class="main-item"><td colspan="2">'.$collectionType['key'] . ' (<span class="number">' . formatNumber( $collectionType['doc_count'] ) . ' total</span>)</tr>';
+		$buffer[]='<tr class="main-item"><td colspan="2">'. $translator->translate( $collectionType['key'] ) . ' (<span class="number">' . formatNumber( $collectionType['doc_count'] ) . ' ' . $translator->translate('total') . '</span>)</tr>';
 
 		$bb=array_slice($collectionType['identifications']['typeStatus']['buckets'],0,5);
 
@@ -357,9 +366,9 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_FULL, "main" => "simple-central", "info" => "normal-central" ],
 		[
-			"title" => __("Type status records per collection"),
+			"title" => $translator->translate("Type status records per collection"),
 			"main" => implode("\n", $buffer), 
-			"info" => "The six top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the five most frequently occurring type statuses in that sub-collection."
+			"info" => sprintf( $translator->translate("The %s top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the %s most frequently occurring type statuses in that sub-collection."),	$maxShow_collections, $maxShow_typeStatuses)
 		]
 	);
 
@@ -370,6 +379,7 @@ var colors=[];
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	$maxShow_collectedSpecies=20;
 	$namesToSkip=['Gen. indet. sp. indet.','GEN.INDET. SP.INDET.'];
 	$buffer=[];
 	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
@@ -378,7 +388,7 @@ var colors=[];
 	{
 		$name=$bucket['key'];
 		if (in_array($name,$namesToSkip)) continue;
-		if ($i++>20) break;
+		if ($i++>$maxShow_collectedSpecies) break;
 		
 		$buffer[]='<tr><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchAdvancedSpecimen,$name).'">' . $name . '</a></td><td class="number">' . formatNumber( $bucket['doc_count'] ) . '</td></tr>';
 	}
@@ -386,12 +396,13 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_TWO_THIRD, "main" => "big-simple-central", "info" => "normal-central" ],
 		[
-			"title" => __("Most collected (sub)species"),
+			"title" => $translator->translate("Most collected (sub)species"),
 			"main" => implode("\n", $buffer), 
-			"info" => "Top 20 of the most collected species or subspecies, measured by number of registered specimen records."
+			"info" => sprintf( $translator->translate("Top %s of the most collected species or subspecies, measured by number of registered specimen records."),$maxShow_collectedSpecies)
 		]
 	);
 
+	$maxShow_collectors=15;
 	$buffer=[];
 	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
 	$i=0;
@@ -416,14 +427,14 @@ var colors=[];
 					'<span>' .$collectorname . '</span><br />
 					<span class="list' . $key . ' grey">&#9660;</span>
 					<span class="list' . $key . ' grey invisible">&#9650;</span>					
-					<span class="post-fix">' . formatNumber( $val['doc_count'] ) . ' registered specimens in ' . $val['collection_count'] . ' collection' . ($val['collection_count']>1 ? 's' : '') . '</span>
+					<span class="post-fix">' . sprintf( $translator->translate('%s registered specimen records in %s collection%s'), formatNumber( $val['doc_count'] ), $val['collection_count'] , ($val['collection_count']>1 ? 's' : '') ) . '</span>
 				</td>
 			</tr>';
 
 		foreach((array)$val['collections'] as $key2=>$collection)
 		{
 			//if ($key2>=5) break;
-			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( __($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
+			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( $translator->translate($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
 		}
 	}	
 
@@ -433,9 +444,9 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "normal-central" ],
 		[
-			"title" => __("Top 15 collectors"),
+			"title" => sprintf($translator->translate("Top %s collectors"),$maxShow_collectors),
 			"main" => implode("\n", $buffer), 
-			"info" => "Top 15 collectors having the most specimen records registered to their name, plus the collections they've contributed to."
+			"info" => sprintf($translator->translate("Top %s collectors having the most specimen records registered to their name, plus the collections they've contributed to."),$maxShow_collectors)
 		]
 	);
 
@@ -487,7 +498,7 @@ $(document).ready(function(e)
 	{
 		echo "specimen_perCollectionTypeData.data.push('" . $bucket['totalUnit_sum']. "');\n";
 		echo "specimen_perCollectionTypeData.colors.push(defaultColors[".$i++."]);\n";
-		echo "specimen_perCollectionTypeData.labels.push('" . ucfirst( __( isset($bucket['label']) ? $bucket['label'] : $key ) ) . "');\n";
+		echo "specimen_perCollectionTypeData.labels.push('" . ucfirst( $translator->translate( isset($bucket['label']) ? $bucket['label'] : $key ) ) . "');\n";
 	}
 
 ?>
