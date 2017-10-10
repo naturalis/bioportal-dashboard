@@ -13,9 +13,9 @@
 			return self::$elasticsearchAddress;
 		}
 
-		static function bioportalHomepage()
+		static function bioportalRootUrl()
 		{
-			return self::$bioportalHomepage;
+			return self::$bioportalRootUrl;
 		}
 		
 		static public function databasAccessParameters()
