@@ -1,6 +1,6 @@
 <?php
 
-	// force refresh: /bioportal-dashboard/?forceDataRefresh
+	// force refresh: /dashboard/?forceDataRefresh
 
 	/*
 		to do:
@@ -97,6 +97,13 @@
 		'StonesNBADiscarded' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 199000, 'average' => 1 ], // should be 'thin section'
 		'paleoLegacy' => [ 'category' => 'paleontologie', 'specimenNumber' => (714000 - 593265), 'average' => 12.64 ]
 	];
+	
+	/*
+		please also note this line in the collectionUnitCalculation class:
+		if ( $category == 'entomologie' ) continue;
+		there is overlap between specimens and storage units for the entomology-collection.
+		since the latter are more complete, the former are ignored in the calculations.
+	*/
 
 	foreach((array)$staticNumbers as $key=>$val)
 	{
@@ -157,8 +164,9 @@ var colors=[];
 	define("CLASS_ONE_THIRD","one-third");
 	define("CLASS_TWO_THIRD","two-third");
 	
-
 	$c = new contentBlocks;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
