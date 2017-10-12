@@ -30,7 +30,7 @@
 			$this->dictionary=[
 				'2D materiaal' => [ 'en' => '2D materials' ],
 				'Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level.' => [ 'nl' => 'Verdeling van de taxa in de taxonindex in de verschillende rangen. De index bevat geen individuele records voor taxa boven soortsniveau.' ],
-				'Collection categories by specimen count' => [ 'nl' => 'Collectiecatgeorieën en totaal aantal specimen records' ],
+				'Collection categories by specimen count' => [ 'nl' => 'Collectiecatgeorieën en totaal aantal specimens' ],
 				'Country top %s' => [ 'nl' => 'Landen top %s' ],
 				'Entomologie' => ['en' => 'Entomology' ],
 				'Evertebraten' => [ 'en' => 'Evertebrates' ],

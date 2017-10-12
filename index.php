@@ -27,7 +27,6 @@
 	include_once("classes/class.collectionUnitCalculation.php");
 	include_once("classes/class.translator.php");
 
-	include_once("config/translations.php");
 	include_once("config/settings.php");
 	
 	$esServer=config::elasticsearchAddress();
@@ -165,6 +164,25 @@ var colors=[];
 	define("CLASS_TWO_THIRD","two-third");
 	
 	$c = new contentBlocks;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+$buffer=[];
+$buffer[]="This dashboard is a window into the entire Naturalis collection. The complete collection has been digitzed in some form, and the process to add the meta-data of all specimens on object level is ongoing.<br />
+The part of the collection that already had been digitzed on object level has been added to the Naturalis Data Store, and can be accessed through the NBA and the BioPortal. Taxon information from the Catalogue of Life and the Dutch Species Register can be accessed in the same way.";
+$buffer[]="The part of the collection that has been digitzed on the level of storage units is as yet not accessible through the NBA and the BioPortal, but will be in the near future. However, in order to present a more complete view on this dashboard, additional data sources have been used to present some totals for the entire collection.";
+$buffer[]="Please note the distinction between the use on this page of the word 'specimen', which refers to individual specimen objects, and the term 'specimen record', which refers to a specimen record registered in the NDS.";
+$buffer[]="For questions about the Naturalis collection: <a href='mailto:collectie@naturalis.nl'>collectie@naturalis.nl</a><br />
+For questions about the BioPortal: <a href='mailto:bioportal@naturalis.nl'>bioportal@naturalis.nl</a>";
+	
+	$c->makeBlock(
+		[ "cell" => CLASS_FULL, "main" => "simple", "info" => "big-simple-central" ],
+		[
+			"title" => $translator->translate("BioPortal dashboard"), 
+			"main" => "<p>" . implode("</p><p>\n",$buffer) . "</p>"
+		]
+	);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

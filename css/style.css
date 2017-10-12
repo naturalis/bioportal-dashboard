@@ -1,3 +1,7 @@
+p {
+	font-size:12px;
+}
+
 #intro {
 	z-index:0;
 }
@@ -172,6 +176,12 @@ div.block-content.big-simple-central {
 div.block-content.simple-central {
 	text-align:center;
 	margin: 10px 0 10px 0;
+}
+div.block-content.simple {
+	font-size:14px;
+	text-align:left;
+	margin: 10px 10px 10px 10px;
+	line-height:20px;
 }
 	
 div.block-info.big-simple-central {
