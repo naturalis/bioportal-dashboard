@@ -483,7 +483,7 @@ For questions about the BioPortal: <a href='mailto:bioportal@naturalis.nl'>biopo
 	$buffer=ob_get_clean();
 
 	$w = new webPageStealer;
-	$w->setUrl( $bpRootUrl );
+	$w->setUrl( $bpRootUrl . '?language=' . $language );
 	$w->stealPage();
 	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"] ] );
 	echo $w->getNewPage();
