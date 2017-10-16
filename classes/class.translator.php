@@ -34,7 +34,7 @@
 				'Country top %s' => [ 'nl' => 'Landen top %s' ],
 				'Entomologie' => ['en' => 'Entomology' ],
 				'Evertebraten' => [ 'en' => 'Evertebrates' ],
-				'full scientific names' => [ 'nl' => 'geaccepteerde wetenschappelijke naam' ],
+				'full scientific names' => [ 'nl' => 'geaccepteerde wetenschappelijke namen' ],
 				'Hogere planten' => [ 'en' => 'Higher plants' ],
 				'Lagere planten' => [ 'en' => 'Lower plants' ],
 				'Mineralogie en petrologie' => [ 'en' => 'Mineralogy and petrology' ],

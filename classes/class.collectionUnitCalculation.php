@@ -143,8 +143,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			"Malaysia/Sarawak" => "MY",
 			"Malaysia/Malaya" => "MY"
 		];
-		
-		
+
 		public function __construct()
 		{
 			$this->initTransformationObject();
@@ -856,9 +855,8 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		{
 			return $this->addedStaticNumbers;
 		}
-	
-				
-				
+
+
 		private function initSumObject()
 		{
 			return [
