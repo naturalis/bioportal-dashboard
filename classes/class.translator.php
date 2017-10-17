@@ -37,6 +37,7 @@
 				'full scientific names' => [ 'nl' => 'geaccepteerde wetenschappelijke namen' ],
 				'Hogere planten' => [ 'en' => 'Higher plants' ],
 				'Lagere planten' => [ 'en' => 'Lower plants' ],
+				'Last import dates' => [ 'nl' => 'Laatste importdatum' ],
 				'Mineralogie en petrologie' => [ 'en' => 'Mineralogy and petrology' ],
 				'Most collected (sub)species' => [ 'nl' => 'Meest verzamelde (onder)soorten' ],
 				'Multimedia count' => [ 'nl' => 'Totaal aantal multimedia records' ],

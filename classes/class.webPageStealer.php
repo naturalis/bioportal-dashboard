@@ -139,13 +139,13 @@
 		}
 				
 		//$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ['element'=>'div', 'content'=>'hi!','attributes'=>['id'=>'new_div']] );
-		public function replaceElementById( $id, $replacement )
+		public function replaceElementById( $id, $replacement=null )
 		{
 			$oldNode = $this->DOMDocument->getElementById( $id );
 			$this->replaceElement( $oldNode, $replacement);
 		}
 
-		public function replaceElementByXPath( $path, $replacement )
+		public function replaceElementByXPath( $path, $replacement=null )
 		{
 			$xp = new DOMXPath($this->DOMDocument);
 			$oldNode = $xp->query($path)->item(0);	
@@ -207,7 +207,10 @@
 
 		private function replaceElement( $element, $replacement )
 		{
-			$newNode = $this->DOMDocument->createElement($replacement["element"], isset($replacement["content"]) ? $replacement["content"] : "" );
+			$newNode = $this->DOMDocument->createElement(
+				isset($replacement["element"]) ? $replacement["element"] : "span", 
+				isset($replacement["content"]) ? $replacement["content"] : "" 
+			);
 
 			if ( isset($replacement["attributes"]) )
 			{

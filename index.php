@@ -168,26 +168,42 @@ var colors=[];
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 $t[]="This dashboard is a window into the entire Naturalis collection. The complete collection has been digitzed in some form, and the process to add the meta-data of all specimens on object level is ongoing.";
-$t[]="The part of the collection that already had been digitzed on object level has been added to the Naturalis Data Store, and can be accessed through the NBA and the BioPortal. Taxon information from the Catalogue of Life and the Dutch Species Register can be accessed in the same way.";
-$t[]="The part of the collection that has been digitzed on the level of storage units is as yet not accessible through the NBA and the BioPortal, but will be in the near future. However, in order to present a more complete view on this dashboard, additional data sources have been used to present some totals for the entire collection.";
+$t[]="The part of the collection that already had been digitzed on object level has been added to the <a href='/api'>Netherlands Biodiversity API</a> and is accessible through the <a href='/over'>BioPortal</a>. These also give access to taxon information from the Catalogue of Life and the Dutch Species Register.";
+$t[]="In order to present a more complete view on this dashboard, additional data sources have been used to present some totals for the entire collection.";
 $t[]="Please note the distinction between the use on this page of the word 'specimen', which refers to individual specimen objects, and the term 'specimen record', which refers to a specimen record registered in the NDS.";
-$t[]="For questions about the Naturalis collection: <a href='mailto:collectie@naturalis.nl'>collectie@naturalis.nl</a><br />
-For questions about the BioPortal: <a href='mailto:bioportal@naturalis.nl'>bioportal@naturalis.nl</a>";
+//$t[]="For questions about the Naturalis collection: <a href='mailto:collectie@naturalis.nl'>collectie@naturalis.nl</a><br />For questions about the BioPortal: <a href='mailto:bioportal@naturalis.nl'>bioportal@naturalis.nl</a>";
 
 $buffer=[];
-$buffer[]="<div style='float:left;width:77%;margin:0 10px 10px 0'><p style='text-align:justify'>" .implode("</p><p style='text-align:justify'>\n",$t). "</p></div>";
+$buffer[]="<div style='float:left;width:66%;margin:0 20px 10px 0'><p style='text-align:justify'>" .implode("</p><p style='text-align:justify'>\n",$t). "</p></div>";
 //http://medialib.naturalis.nl/file/id/RMNH.ART.376/format/large
-$buffer[]="<div style='border:1px solid #aaa;float:left;width:22%'><img src='http://medialib.naturalis.nl/file/id/RMNH.ART.374/format/large' style='width:800px'></div>";
-
+$buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><img src='http://medialib.naturalis.nl/file/id/RMNH.ART.374/format/large' style='width:210px;'></div>";
 
 
 	$c->makeBlock(
-		[ "cell" => CLASS_FULL, "main" => "simple", "info" => "big-simple-central" ],
+		[ "cell" => CLASS_TWO_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
 			"title" => $translator->translate("BioPortal dashboard"), 
 			"main" => implode("\n",$buffer)
 		]
 	);
+
+	
+	
+	$w = new webPageStealer;
+	$w->setUrl( $bpRootUrl . '/nbaimport?language=' . $language . '&response_type=embed' );
+	$w->stealPage();
+	$w->replaceElementByXPath( "/html/body/div[1]" );
+	
+	$c->makeBlock(
+		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
+		[
+			"title" => $translator->translate("Last import dates"),
+			"main" => $w->getNewPage()
+		]
+	);
+	
+	echo $c->getBlockRow();
+	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
