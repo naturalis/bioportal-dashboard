@@ -219,8 +219,12 @@
 					$newNode->setAttribute($attribute,$value);
 				}
 			}
-			$element->parentNode->replaceChild($newNode, $element);	
-			$this->setNewPage( $this->DOMDocument->saveHTML($this->DOMDocument->documentElement) );
+			
+			if ($element->parentNode)
+			{
+				$element->parentNode->replaceChild($newNode, $element);	
+				$this->setNewPage( $this->DOMDocument->saveHTML($this->DOMDocument->documentElement) );
+			}
 		}
 
 	}
