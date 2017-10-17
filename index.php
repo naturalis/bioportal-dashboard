@@ -138,8 +138,7 @@
 	$calculator->calculateWorldNumbers();
 	$calculator->sortWorldNumbers( 'doc_count', 'desc' );
 	$world=$calculator->getWorldNumbers();
-	
-	
+
 	ob_start();
 
 ?>
@@ -182,13 +181,12 @@ $buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><im
 	$c->makeBlock(
 		[ "cell" => CLASS_TWO_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
-			"title" => $translator->translate("BioPortal dashboard"), 
+			"title" => $translator->translate("Naturalis dashboard"), 
 			"main" => implode("\n",$buffer)
 		]
 	);
 
-	
-	
+
 	$w = new webPageStealer;
 	$w->setUrl( $bpRootUrl . '/nbaimport?language=' . $language . '&response_type=embed' );
 	$w->stealPage();
@@ -357,9 +355,9 @@ $buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><im
 	$i=0;
 	foreach((array)$world as $country)
 	{
-		if ($country['label']=='Netherlands') continue;
+		if ($country['label']=='nederland') continue;
 		if ($i++>=$countryCutOff) break; 
-		$buffer[] = '<tr><td>' . $country['label'] . '</td><td class="number">' . formatNumber( $country['doc_count'] ) . '</td></tr>';
+		$buffer[] = '<tr><td>' . ucwords($country['label']) . '</td><td class="number">' . formatNumber( $country['doc_count'] ) . '</td></tr>';
 	}
 
 	$buffer[]='</table></div>';	
@@ -606,7 +604,7 @@ $(document).ready(function(e)
 
 	var dataWorldMap1 = [
 	<?php foreach($world as $country) { 
-			if ($country['label']=='Netherlands') continue;
+			if ($country['label']=='nederland') continue;
 			echo  "['".strtolower($country['iso_code'])."', ".$country['doc_count']."],\n"; } ?>
 	];
 
