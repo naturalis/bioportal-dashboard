@@ -27,7 +27,7 @@
 	include_once("classes/class.collectionUnitCalculation.php");
 	include_once("classes/class.translator.php");
 
-	include_once("config/settings.php");
+	include_once("config/class.config.php");
 	
 	$esServer=config::elasticsearchAddress();
 	$bpRootUrl=config::bioportalRootUrl();
