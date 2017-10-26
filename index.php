@@ -166,16 +166,19 @@ var colors=[];
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-$t[]="This dashboard is a window into the entire Naturalis collection. The complete collection has been digitzed in some form, and the process to add the meta-data of all specimens on object level is ongoing.";
-$t[]="The part of the collection that already had been digitzed on object level has been added to the <a href='/api'>Netherlands Biodiversity API</a> and is accessible through the <a href='/over'>BioPortal</a>. These also give access to taxon information from the Catalogue of Life and the Dutch Species Register.";
-$t[]="In order to present a more complete view on this dashboard, additional data sources have been used to present some totals for the entire collection.";
-$t[]="Please note the distinction between the use on this page of the word 'specimen', which refers to individual specimen objects, and the term 'specimen record', which refers to a specimen record registered in the NDS.";
-//$t[]="For questions about the Naturalis collection: <a href='mailto:collectie@naturalis.nl'>collectie@naturalis.nl</a><br />For questions about the BioPortal: <a href='mailto:bioportal@naturalis.nl'>bioportal@naturalis.nl</a>";
+	$t[]=$translator->translate("intro1");
+	$t[]=$translator->translate("intro2");
+	$t[]=$translator->translate("intro3");
+	$t[]=$translator->translate("intro4");
 
-$buffer=[];
-$buffer[]="<div style='float:left;width:66%;margin:0 20px 10px 0'><p style='text-align:justify'>" .implode("</p><p style='text-align:justify'>\n",$t). "</p></div>";
-//http://medialib.naturalis.nl/file/id/RMNH.ART.376/format/large
-$buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><img src='http://medialib.naturalis.nl/file/id/RMNH.ART.374/format/large' style='width:210px;'></div>";
+	$buffer=[];
+	$buffer[]="<div style='float:left;width:70%;margin:0 20px 10px 5px;'><p style='text-align:justify;'>" .implode("</p><p style='text-align:justify'>\n",$t). "</p></div>";
+
+	$buffer[]="
+		<div style='float:right;margin:15px 10px 15px 0;'>
+			<img style='border:1px solid #eee;width:170px;margin-bottom:10px;' src='img/1b.jpg'><br />
+			<img style='border:1px solid #eee;width:170px;' src='img/3.jpg'>
+		</div>";
 
 
 	$c->makeBlock(
@@ -395,7 +398,7 @@ $buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><im
 
 		foreach((array)$bb as $typeStatus)
 		{
-			$buffer[]='<tr class="sub-item"><td>' . $typeStatus['key'] . '</td><td class="number">' . formatNumber( $typeStatus['doc_count'] ) . '</td></tr>';
+			$buffer[]='<tr class="sub-item"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectionAndType,$collectionType['key'],$typeStatus['key']).'">' . $typeStatus['key'] . '</a></td><td class="number">' . formatNumber( $typeStatus['doc_count'] ) . '</td></tr>';
 		}
 		
 		$buffer[]='<tr class="no-item"><td colspan="2">&nbsp;</td></tr>';
@@ -479,7 +482,8 @@ $buffer[]="<div style='border:1px solid #aaa;float:left;margin-bottom:15px;'><im
 		foreach((array)$val['collections'] as $key2=>$collection)
 		{
 			//if ($key2>=5) break;
-			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( $translator->translate($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
+//			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( $translator->translate($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
+			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectorAndCollection,$collection['collection'],$val['collector']).'">' . ucfirst( $translator->translate($collection['collection']) ). '</a></td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
 		}
 	}	
 

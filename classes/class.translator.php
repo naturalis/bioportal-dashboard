@@ -28,6 +28,28 @@
 		private function setDictionary()
 		{
 			$this->dictionary=[
+				'intro1' =>
+					[
+						'nl' => 'Dit dashboard geeft inzicht in de complete collectie van Naturalis. De hele collectie is in een of andere vorm gedigitaliseerd, en er loopt een continu proces om hier de metadata van alle specimens op objectniveau toe te voegen.',
+						'en' => 'This dashboard is a window into the entire Naturalis collection. The complete collection has been digitzed in some form, and the process to add the meta-data of all specimens on object level is ongoing.'
+					],
+				'intro2' =>
+					[
+						'nl' => 'Het deel van de collectie dat al op objectniveau is gedigitaliseerd is toegevoegd aan de <a href="/api">Netherlands Biodiversity API</a> en is toegankelijk via het <a href="/over">BioPortal</a>. Deze geven ook toegang tot taxoninformatie uit de Catalogue of Life en het Nederlands Soortenregister.',
+						'en' => 'The part of the collection that already had been digitzed on object level has been added to the <a href="/api">Netherlands Biodiversity API</a> and is accessible through the <a href="/over">BioPortal</a>. These also give access to taxon information from the Catalogue of Life and the Dutch Species Register.'
+
+					],
+				'intro3' => 
+					[ 
+						'nl' => 'Teneinde op dit dashboard een zo compleet mogelijk beeld te kunnen presenteren is een aantal aanvullende databronnen gebruikt voor sommige collectie-totalen',
+						'en' => 'In order to present a more complete view on this dashboard, additional data sources have been used to present some totals for the entire collection.'
+					],
+				'intro4' =>
+					[
+						'nl' => 'Let op: op deze pagina wordt onderscheid gemaakt tussen het woord \'specimen\', dat refereert aan individuele specimenobjecten, en de term \'specimen record\', waarmee wordt gerefereerd aan een in de NBA geregistreerd specimendocument.',
+						'en' => 'Please note the distinction between the use on this page of the word \'specimen\', which refers to individual specimen objects, and the term \'specimen record\', which refers to a specimen record registered in the NBA.'
+					 ],
+			
 				'2D materiaal' => [ 'en' => '2D materials' ],
 				'Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level.' => [ 'nl' => 'Verdeling van de taxa in de taxonindex in de verschillende rangen. De index bevat geen individuele records voor taxa boven soortsniveau.' ],
 				'Collection categories by specimen count' => [ 'nl' => 'Collectiecatgeorieën en totaal aantal specimens' ],
