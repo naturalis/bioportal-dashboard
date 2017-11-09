@@ -216,8 +216,6 @@
 
 		private function replaceElement( $element, $replacement )
 		{
-
-
 			if ( isset($replacement["html"]) && $replacement["html"]==true )
 			{
 				$tmpDoc = new DOMDocument();

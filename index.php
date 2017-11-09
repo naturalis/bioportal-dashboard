@@ -199,7 +199,7 @@ var colors=[];
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
 			"title" => $translator->translate("Last import dates"),
-			"main" => $w->getNewPage()
+			"main" => utf8_decode($w->getNewPage())
 		]
 	);
 	
@@ -228,8 +228,6 @@ var colors=[];
 	);
 
 	echo $c->getBlockRow();
-	
-	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -419,8 +417,6 @@ var colors=[];
 			"info" => sprintf( $translator->translate("The %s top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the %s most frequently occurring type statuses in that sub-collection."),	$maxShow_collections, $maxShow_typeStatuses)
 		]
 	);
-
-
 
 	echo $c->getBlockRow();
 	
