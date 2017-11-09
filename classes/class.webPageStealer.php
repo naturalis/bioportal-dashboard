@@ -137,21 +137,30 @@
 		{
 			return $this->DOMDocument->saveHTML( $this->DOMDocument->getElementById( $id ) );
 		}
-				
-		//$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ['element'=>'div', 'content'=>'hi!','attributes'=>['id'=>'new_div']] );
+
 		public function replaceElementById( $id, $replacement=null )
 		{
 			$oldNode = $this->DOMDocument->getElementById( $id );
 			$this->replaceElement( $oldNode, $replacement);
 		}
-
+		
+		//$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ['element'=>'div', 'content'=>'hi!','attributes'=>['id'=>'new_div']] );
 		public function replaceElementByXPath( $path, $replacement=null )
 		{
 			$xp = new DOMXPath($this->DOMDocument);
 			$oldNode = $xp->query($path)->item(0);	
-			$this->replaceElement( $oldNode, $replacement);
+			$this->replaceElement( $oldNode, $replacement );
 		}
 		
+		//$w->replaceElementsByTag( "title", ['element'=>'title', 'content'=>'hi!']);
+		public function replaceElementsByTag( $tag, $replacement=null )
+		{
+			$oldNodes = $this->DOMDocument->getElementsByTagName ( $tag );
+			foreach ($oldNodes as $oldNode) 
+			{
+				$this->replaceElement( $oldNode, $replacement );
+			}
+		}
 		public function getPageElementsByTag( $tag )
 		{
 			$b=[];

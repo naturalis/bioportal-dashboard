@@ -506,9 +506,10 @@ var colors=[];
 	$buffer=ob_get_clean();
 
 	$w = new webPageStealer;
-	$w->setUrl( $bpRootUrl . '?language=' . $language );
+	$w->setUrl( $bpRootUrl . 'over?language=' . $language );
 	$w->stealPage();
-	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"] ] );
+	$w->replaceElementByXPath( "/html/body/div[2]/main", ["element"=>"div", "attributes"=>["id"=>"dashboard_data","class"=>"row l-main","role"=>"main"] ] );
+	$w->replaceElementsByTag( "title", ["element"=>"title", "content"=>"BioPortal Dashboard"] );
 	echo $w->getNewPage();
 
 ?>	
