@@ -508,7 +508,7 @@ var colors=[];
 	$w = new webPageStealer;
 	$w->setUrl( $bpRootUrl . '?language=' . $language );
 	$w->stealPage();
-	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"] ] );
+	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"],"content" => $buffer ] );
 	$w->replaceElementById( "naturalis-header" );
 	$w->replaceElementsByTag( "title", ["element"=>"title", "content"=>"BioPortal Dashboard"] );
 	echo $w->getNewPage();
@@ -538,7 +538,7 @@ var defaultColors=['#51574a','#8e8c6d','#e2975d','#c94a53','#993767','#9163b6','
 
 $(document).ready(function(e)
 {
-	$('#dashboard_data').html($('#data_buffer').html());
+	//$('#dashboard_data').html($('#data_buffer').html());
 
 	var specimen_perCollectionTypeData = {data:[],colors:[],labels:[]};
 	
