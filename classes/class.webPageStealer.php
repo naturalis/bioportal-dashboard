@@ -216,19 +216,33 @@
 
 		private function replaceElement( $element, $replacement )
 		{
-			$newNode = $this->DOMDocument->createElement(
-				isset($replacement["element"]) ? $replacement["element"] : "span", 
-				isset($replacement["content"]) ? $replacement["content"] : "" 
-			);
 
-			if ( isset($replacement["attributes"]) )
+
+			if ( isset($replacement["html"]) && $replacement["html"]==true )
 			{
-				foreach((array)$replacement["attributes"] as $attribute=>$value)
-				{
-					$newNode->setAttribute($attribute,$value);
-				}
+				$tmpDoc = new DOMDocument();
+				$tmpDoc->loadHTML( $replacement["content"] );
+				$newNode = $this->DOMDocument->createElement( "span" );		
+				$node = $this->DOMDocument->importNode( $tmpDoc->getElementsByTagName('*')->item(0), true );
+				$newNode->appendChild($node);
 			}
-			
+			else
+			{
+				$newNode = $this->DOMDocument->createElement(
+					isset($replacement["element"]) ? $replacement["element"] : "span", 
+					isset($replacement["content"]) ? $replacement["content"] : "" 
+				);
+
+				if ( isset($replacement["attributes"]) )
+				{
+					foreach((array)$replacement["attributes"] as $attribute=>$value)
+					{
+						$newNode->setAttribute($attribute,$value);
+					}
+				}
+				
+			}
+
 			if ($element->parentNode)
 			{
 				$element->parentNode->replaceChild($newNode, $element);	

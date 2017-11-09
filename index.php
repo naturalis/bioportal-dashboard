@@ -508,17 +508,13 @@ var colors=[];
 	$w = new webPageStealer;
 	$w->setUrl( $bpRootUrl . '?language=' . $language );
 	$w->stealPage();
-	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"] ] );
+	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"], "content" => $buffer, "html" => true ] );
 	$w->replaceElementById( "naturalis-header" );
 	$w->replaceElementsByTag( "title", ["element"=>"title", "content"=>"BioPortal Dashboard"] );
 	echo $w->getNewPage();
 
 ?>	
 
-<div style="display:none" id="data_buffer">
-<!-- form method=post><input type=submit value=forceRefresh><input type=hidden name=forceDataRefresh></post -->
-<?php echo $buffer; ?>
-</div>
 
 <script src="js/highcharts/highmaps.js"></script>
 <script src="js/highcharts/exporting.js"></script>
@@ -538,9 +534,6 @@ var defaultColors=['#51574a','#8e8c6d','#e2975d','#c94a53','#993767','#9163b6','
 
 $(document).ready(function(e)
 {
-	$('#dashboard_data').html($('#data_buffer').html());
-	$('#data_buffer').remove();
-
 	var specimen_perCollectionTypeData = {data:[],colors:[],labels:[]};
 	
 <?php
