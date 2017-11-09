@@ -145,6 +145,8 @@
 		}
 		
 		//$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ['element'=>'div', 'content'=>'hi!','attributes'=>['id'=>'new_div']] );
+		// for large swaths of preformatted html, use (attributes will be ignored):
+		//$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"], "content" => $buffer, "html" => true ] );
 		public function replaceElementByXPath( $path, $replacement=null )
 		{
 			$xp = new DOMXPath($this->DOMDocument);
