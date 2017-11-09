@@ -623,7 +623,7 @@ $(document).ready(function(e)
 	$('#language-menu > li').each(function()
 	{
 		var e=$(this).find('a');
-		e.attr('href','/dashboard?language=' + e.html());
+		e.attr('href','/dashboard?language=' + e.html().toLowerCase());
 	});
 	
 });
