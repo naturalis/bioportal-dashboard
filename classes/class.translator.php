@@ -4,6 +4,7 @@
 
 		private $language;
 		private $dictionary=[];
+		private $encodeHtmlEntities=true;
 		
 		public function __construct() 
 		{
@@ -15,14 +16,20 @@
 			$this->language=$language;
 		}
 
+		public function setEncodeHtmlEntities( $state )
+		{
+			if (!is_bool($state)) return;
+			$this->encodeHtmlEntities=$state;
+		}
+
 		public function translate( $text )
 		{
 			if (isset($this->dictionary[$text]) && isset($this->dictionary[$text][$this->language]))
 			{
-				return $this->dictionary[$text][$this->language];
+				return $this->encodeHtmlEntities ? htmlentities($this->dictionary[$text][$this->language]) : $this->dictionary[$text][$this->language];
 			}
 
-			return $text;
+			return $this->encodeHtmlEntities ? htmlentities($text) : $text;
 		}
 
 		private function setDictionary()
