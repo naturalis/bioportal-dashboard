@@ -172,7 +172,7 @@ var colors=[];
 	$t[]=$translator->translate("intro4");
 
 	$buffer=[];
-	$buffer[]="<div style='float:left;width:70%;margin:0 20px 10px 5px;'><p style='text-align:justify;'>" .implode("</p><p style='text-align:justify'>\n",$t). "</p></div>";
+	$buffer[]="<div style='float:left;width:70%;margin:0 20px 10px 5px;'><p>" .implode("</p><p>\n",$t). "</p></div>";
 
 	$buffer[]="
 		<div style='float:right;margin:15px 10px 15px 0;'>

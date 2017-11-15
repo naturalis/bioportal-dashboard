@@ -4,7 +4,7 @@
 
 		private $language;
 		private $dictionary=[];
-		private $encodeHtmlEntities=true;
+		private $encodeHtmlEntities=false;
 		
 		public function __construct() 
 		{
@@ -59,7 +59,8 @@
 			
 				'2D materiaal' => [ 'en' => '2D materials' ],
 				'Breakdown of taxa per rank in the taxon index. The index does not contain individual records for taxa above species level.' => [ 'nl' => 'Verdeling van de taxa in de taxonindex in de verschillende rangen. De index bevat geen individuele records voor taxa boven soortsniveau.' ],
-				'Collection categories by specimen count' => [ 'nl' => 'Collectiecatgeorieën en totaal aantal specimens' ],
+				'Specimen count' => [ 'nl' => 'Totaal aantal specimens' ],
+				'Collection categories by specimen count' => [ 'nl' => 'Collectiecategorie&euml;n en totaal aantal specimens' ],
 				'Country top %s' => [ 'nl' => 'Landen top %s' ],
 				'Entomologie' => ['en' => 'Entomology' ],
 				'Evertebraten' => [ 'en' => 'Evertebrates' ],
@@ -82,10 +83,10 @@
 				'registered in the Netherlands Biodiversity API as %s specimen records and %s storage units.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API als %s specimen records en %s bewaareenheden.' ],
 				'registered in the Netherlands Biodiversity API, consisting of  specimen images from the collection and taxon photo\'s from Dutch Species Register.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API, samengesteld uit specimenafbeeldingen uit de collectie en soortfoto\'s uit het Nederlands Soortenregister.' ],
 				'registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API, afkomstig uit de Catalogue of Life en het Nederlands Soortenregister.' ],
-				'Registered specimen records per country (without The Netherlands)' => [ 'nl' => 'Geregistreerde specimen records per land (zonder Nederland)' ],
+				'Registered specimen records per country (excluding The Netherlands)' => [ 'nl' => 'Geregistreerde specimen records per land (zonder Nederland)' ],
 				'Reptielen en amfibieën' => [ 'en' => 'Reptiles and amphibians' ],
-				'Specimen count' => [ 'nl' => 'Totaal aantal specimen' ],
-				'Specimens per Dutch province' => [ 'nl' => 'Specimen per provincie' ],
+				'Specimen count' => [ 'nl' => 'Totaal aantal specimens' ],
+				'Specimens per Dutch province' => [ 'nl' => 'Specimens per provincie' ],
 				'Specimen records per Dutch province' => [ 'nl' => 'Specimen records per provincie' ],
 				'Taxon count' => [ 'nl' => 'Totaal aantal taxa' ],
 				'The %s top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the %s most frequently occurring type statuses in that sub-collection.' => [ 'nl' => 'De %s grootste deelcollecties gemeten naar het aantal specimen records met een typestatus,<br />plus de %s meest voorkomende typestatussen in iedere deelcollectie.' ],
