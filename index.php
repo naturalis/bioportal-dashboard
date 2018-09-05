@@ -258,7 +258,7 @@ var colors=[];
 
 	$loadInfos["storage_units"] = "22 " . translateMonth(5,$language) . " 2017";
 
-	$table[] = '<table>';
+	$table[] = '<table id="importDates">';
 
 	foreach ([
 		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],

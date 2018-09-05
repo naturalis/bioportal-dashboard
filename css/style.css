@@ -211,3 +211,12 @@ div.block-info.normal-central{
 	line-height:1.5em;
 	width:95%;
 }
+
+table#importDates td, table#importDates th {
+	vertical-align: top;
+}
+
+table#importDates td {
+	width: 140px;
+	text-align: right;
+}
