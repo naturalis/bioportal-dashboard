@@ -240,7 +240,7 @@ var colors=[];
 
 	$w = new webPageStealer;
 
-	$w->setUrl( $$nbaServer . '/v2/import-files' );
+	$w->setUrl( $nbaServer . '/v2/import-files' );
 	$w->stealPage();
 
 	$loadInfos = json_decode($w->getPage(),true);
