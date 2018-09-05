@@ -258,7 +258,7 @@ var colors=[];
 
 	$loadInfos["storage_units"] = "22 " + translateMonth(5,$language) + " 2017";
 
-	$buffer[] = '<table>';
+	$table[] = '<table>';
 
 	foreach ([
 		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],
@@ -267,16 +267,16 @@ var colors=[];
 		"Catalogue of Life" => $loadInfos["col_source_file"],
 		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
 	] as $key => $val) {
-		$buffer[] = '<tr><th>'+$key+'</td><td>'+$val+'</td></tr>';
+		$table[] = '<tr><th>'+$key+'</td><td>'+$val+'</td></tr>';
 	}
 
-	$buffer[] = '</table>';
+	$table[] = '</table>';
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
 			"title" => $translator->translate("Last import dates"),
-			"main" => implode("\n",$buffer)
+			"main" => implode("\n",$table)
 		]
 	);
 
