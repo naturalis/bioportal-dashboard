@@ -282,19 +282,6 @@ var colors=[];
 		]
 	);
 
-/*
-	$w->setUrl( $bpRootUrl . '/nbaimport?language=' . $language . '&response_type=embed' );
-	$w->stealPage();
-	$w->replaceElementByXPath( "/html/body/div[1]" );
-	$c->makeBlock(
-		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
-		[
-			"title" => $translator->translate("Last import dates"),
-			"main" => utf8_decode($w->getNewPage())
-		]
-	);	
-*/	
-
 	echo $c->getBlockRow();
 	
 
