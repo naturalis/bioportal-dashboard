@@ -249,14 +249,14 @@ var colors=[];
 		$str = str_replace(["nsr-","crs-specimens-","col-","brahms-",".tar.gz"], "", $value);
 		if ($key!="col_source_file") {
 			$date = date_parse($str);
-			$loadInfos[$key] = $date["day"] + " " + translateMonth($date["month"],$language) + " " + $date["year"];
+			$loadInfos[$key] = $date["day"] . " " . translateMonth($date["month"],$language) . " " . $date["year"];
 		}
 		else {
 			$loadInfos[$key] = $str;
 		}
 	}
 
-	$loadInfos["storage_units"] = "22 " + translateMonth(5,$language) + " 2017";
+	$loadInfos["storage_units"] = "22 " . translateMonth(5,$language) . " 2017";
 
 	$table[] = '<table>';
 
@@ -267,7 +267,7 @@ var colors=[];
 		"Catalogue of Life" => $loadInfos["col_source_file"],
 		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
 	] as $key => $val) {
-		$table[] = '<tr><th>'+$key+'</td><td>'+$val+'</td></tr>';
+		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
 	}
 
 	$table[] = '</table>';
