@@ -217,6 +217,6 @@ table#importDates td, table#importDates th {
 }
 
 table#importDates td {
-	width: 150px;
+	white-space: nowrap;
 	text-align: right;
 }
