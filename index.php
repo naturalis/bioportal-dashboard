@@ -271,7 +271,7 @@ var colors=[];
 	}
 
 	$table[] = '</table>';
-	$table[] = '<span title="import_date: ' . $loadInfos["import_date"] .'">&nbsp;&nbsp;&nbsp;</span>';
+	$table[] = '<!-- import_date: ' . $loadInfos["import_date"] .' -->';
 
 
 	$c->makeBlock(
