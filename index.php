@@ -271,6 +271,8 @@ var colors=[];
 	}
 
 	$table[] = '</table>';
+	$table[] = '<span title="import_date: ' . $loadInfos["import_date"] .'">&nbsp</span>';
+
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
@@ -709,9 +711,3 @@ $(document).ready(function(e)
 });
 </script>
 	
-
-<?php
-
-	echo '<!-- import_date: ' . $loadInfos["import_date"] .' -->';
-
-?>
