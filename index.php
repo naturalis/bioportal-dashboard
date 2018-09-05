@@ -256,7 +256,7 @@ var colors=[];
 		}
 	}
 
-	$loadInfos["storage_units"] = "22 " + (translateMonth(5,$language) + " 2017";
+	$loadInfos["storage_units"] = "22 " + translateMonth(5,$language) + " 2017";
 
 	$buffer[] = '<table>';
 
