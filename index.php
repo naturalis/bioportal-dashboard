@@ -33,6 +33,8 @@
 	$bpRootUrl=config::bioportalRootUrl();
 	$dbAccess=config::databasAccessParameters();
 	$urls=config::searchUrls();
+	$nbaServer=config::nbaAddress();
+
 
 	// ?forceDataRefresh forces data refresh (and re-caching)
 	$forceDataRefresh = (isset($_REQUEST["forceDataRefresh"]));
@@ -190,19 +192,107 @@ var colors=[];
 	);
 
 
+	function translateMonth( $month, $ln ) {
+
+		switch ($month) {
+			case 1:
+				return $ln=='en' ? 'January' : 'januari' ;
+				break;
+			case 2:
+				return $ln=='en' ? 'February' : 'februari' ;
+				break;
+			case 3:
+				return $ln=='en' ? 'March' : 'maart' ;
+				break;
+			case 4:
+				return $ln=='en' ? 'April' : 'april' ;
+				break;
+			case 5:
+				return $ln=='en' ? 'May' : 'mei' ;
+				break;
+			case 6:
+				return $ln=='en' ? 'June' : 'juni' ;
+				break;
+			case 7:
+				return $ln=='en' ? 'July' : 'juli' ;
+				break;
+			case 8:
+				return $ln=='en' ? 'August' : 'augustus' ;
+				break;
+			case 9:
+				return $ln=='en' ? 'September' : 'september' ;
+				break;
+			case 10:
+				return $ln=='en' ? 'October' : 'oktober' ;
+				break;
+			case 11:
+				return $ln=='en' ? 'November' : 'november' ;
+				break;
+			case 12:
+				return $ln=='en' ? 'December' : 'december' ;
+				break;
+			default:
+				return $month;
+		}
+	}
+
+
+
 	$w = new webPageStealer;
+
+	$w->setUrl( $$nbaServer . '/v2/import-files' );
+	$w->stealPage();
+
+	$loadInfos = json_decode($w->getPage(),true);
+
+	foreach ($loadInfos as $key => $value) {
+		$str = str_replace(["nsr-","crs-specimens-","col-","brahms-",".tar.gz"], "", $value);
+		if ($key!="col_source_file") {
+			$date = date_parse($str);
+			$loadInfos[$key] = $date["day"] + " " + translateMonth($date["month"],$language) + " " + $date["year"];
+		}
+		else {
+			$loadInfos[$key] = $str;
+		}
+	}
+
+	$loadInfos["storage_units"] = "22 " + (translateMonth(5,$language) + " 2017";
+
+	$buffer[] = '<table>';
+
+	foreach ([
+		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],
+		"Naturalis Zoology and Geology catalogues" => $loadInfos["crs_specimens_sourcefile"],
+		"Naturalis storage units" => $loadInfos["storage_units"],
+		"Catalogue of Life" => $loadInfos["col_source_file"],
+		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
+	] as $key => $val) {
+		$buffer[] = '<tr><th>'+$key+'</td><td>'+$val+'</td></tr>';
+	}
+
+	$buffer[] = '</table>';
+
+	$c->makeBlock(
+		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
+		[
+			"title" => $translator->translate("Last import dates"),
+			"main" => implode("\n",$buffer)
+		]
+	);
+
+/*
 	$w->setUrl( $bpRootUrl . '/nbaimport?language=' . $language . '&response_type=embed' );
 	$w->stealPage();
 	$w->replaceElementByXPath( "/html/body/div[1]" );
-	
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
 			"title" => $translator->translate("Last import dates"),
 			"main" => utf8_decode($w->getNewPage())
 		]
-	);
-	
+	);	
+*/	
+
 	echo $c->getBlockRow();
 	
 
