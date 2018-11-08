@@ -42,9 +42,8 @@
 					],
 				'intro2' =>
 					[
-						'nl' => 'Het deel van de collectie dat al op objectniveau is gedigitaliseerd is toegevoegd aan de <a href="/api">Netherlands Biodiversity API</a> en is toegankelijk via het BioPortal. Deze geven ook toegang tot taxoninformatie uit de Catalogue of Life en het Nederlands Soortenregister.',
-						'en' => 'The part of the collection that already has been digitized at object level was added to the <a href="/api">Netherlands Biodiversity API</a> and is accessible through the BioPortal. The API and BioPortal also give access to taxon information from the Catalogue of Life and the Dutch Species Register.'
-
+						'nl' => 'Het deel van de collectie dat al op objectniveau is gedigitaliseerd is toegevoegd aan de <a href="/api">Netherlands Biodiversity API</a> (NBA) en is toegankelijk via het BioPortal. Daarnaast kan de NBA ook bevraagd worden middels <a href="https://naturalis.github.io/nbaR/articles/nbaR.html" target="_new">nbaR</a>, een speciaal ontwikkelde client voor de statistiek- en analysesoftware R. Deze geven ook toegang tot taxoninformatie uit de Catalogue of Life en het Nederlands Soortenregister.',
+						'en' => 'The part of the collection that already has been digitized at object level was added to the <a href="/api">Netherlands Biodiversity API</a> (NBA) and is accessible through the BioPortal. Additionally, the NBA can be accessed using <a href="https://naturalis.github.io/nbaR/articles/nbaR.html" target="_new">nbaR</a>, a specially developed client for the statistics- and analytics-language R. The API and BioPortal also give access to taxon information from the Catalogue of Life and the Dutch Species Register.'
 					],
 				'intro3' => 
 					[ 
