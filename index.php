@@ -266,6 +266,7 @@ var colors=[];
 		"Naturalis storage units" => $loadInfos["storage_units"],
 		"Catalogue of Life" => $loadInfos["col_source_file"],
 		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
+		"Xeno-canto" => $loadInfos["xc_specimens_sourcefile"],
 	] as $key => $val) {
 		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
 	}
