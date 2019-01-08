@@ -249,5 +249,4 @@
 				$this->setNewPage( $this->DOMDocument->saveHTML($this->DOMDocument->documentElement) );
 			}
 		}
-
 	}

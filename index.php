@@ -18,9 +18,9 @@
 			something useful that can be expressed in a radar plot (because they are cool)
 	*/
 
-
-	include_once("classes/class.ndsInterface.php");
-	include_once("classes/class.ndsDataHarverster.php");
+	include_once("classes/class.nbaInterface.php");
+	include_once("classes/class.storageUnits.php");
+	include_once("classes/class.nbaQueries.php");
 	include_once("classes/class.dataCache.php");
 	include_once("classes/class.webPageStealer.php");
 	include_once("classes/class.contentBlocks.php");
@@ -28,13 +28,10 @@
 	include_once("classes/class.translator.php");
 
 	include_once("config/class.config.php");
-	
-	$esServer=config::elasticsearchAddress();
+
 	$bpRootUrl=config::bioportalRootUrl();
 	$dbAccess=config::databasAccessParameters();
 	$urls=config::searchUrls();
-	$nbaServer=config::nbaAddress();
-
 
 	// ?forceDataRefresh forces data refresh (and re-caching)
 	$forceDataRefresh = (isset($_REQUEST["forceDataRefresh"]));
@@ -52,8 +49,6 @@
 		return number_format( $number, $decimals, ",", ".");
 	}
 
-	
-	
 	$translator=new Translator;
 	$translator->setLanguage( $language );
 	
@@ -68,28 +63,91 @@
 		
 	if (needFreshData( $forceDataRefresh ) || !isset($data->specimen_totalCount))
 	{
-		$n=new ndsDataHarvester;
-		$n->setServer( $esServer  );
-		$n->setServicePaths( [ 'taxon' => '/taxon/', 'specimen' => '/specimen/', 'multimedia'=>'/multimedia/', 'geo'=>'/geo/', 'storageunits'=>'/storageunits/' ] );
-		$n->setQueryParameterField( 'query' );
-		$n->setNdsInterface( new ndsInterface );
-		$n->initialize();
-		$n->runQueries();
-		$data = $n->getData();
+
+		set_time_limit( 3600 );
+	
+		$data = new stdClass;
+
+		$n = new nbaInterface;
+		$n->setNbaAddress( config::nbaAddress() );
+
+		$q = new nbaQueries( $n );
+
+		$sU = new storageUnits( config::storageUnitDbPath() );
+
+		$q->setLowerRanks( [ "species", "subspecies", "subsp", "ssp." ] ); // [ "species", "subspecies", "var.", "subsp", "forma", "cv.", "f.", "subvar."]
+		$q->setIgnorableFullScientificNames( [ "Gen. indet. sp. indet.","GEN.INDET. SP.INDET."] );
+		$q->setIgnorableCollectors( [ "Unknown", "Unreadable", "Stud bio" ] );
+		$q->setSourceSystems( "specimen", ["BRAHMS","CRS"] );
+		$q->setSourceSystems( "taxon", ["COL","NSR"] );
+		$q->setSourceSystems( "multimedia", ["BRAHMS","CRS","NSR"] );
+
+		$q->setDutchlands($sU->getDutchlands(false));
+
+		$r = $q->nbaGetSpecimenOverview();
+		$data->specimen_acceptedNamesCardinality = $r["specimen_acceptedNamesCardinality"];
+		$data->specimen_typeStatusPerCollectionType = $r["specimen_typeStatusPerCollectionType"];
+		$data->specimen_perScientificName = $r["specimen_perScientificName"];
+		$data->specimen_collectionTypeCountPerGatherer = $q->nbaGetCollectors();
+
+		$r = $q->nbaGetMainNumbers();
+		$data->specimen_totalCount = $r["specimen_totalCount"];
+		$data->taxon_totalCount = $r["taxon_totalCount"];
+		$data->multimedia_totalCount = $r["multimedia_totalCount"];
+
+		$r = $q->nbaGetTaxonOverview();
+		$data->taxon_groupByRank = $r["taxon_groupByRank"];
+		$data->taxon_acceptedNamesCardinality = $r["taxon_acceptedNamesCardinality"];
+		$data->taxon_synonymCardinality = $r["taxon_synonymCardinality"];
+		$data->taxon_vernacularNamesCardinality = $r["taxon_vernacularNamesCardinality"];
+
+		$r = $q->nbaGetCollectionOverview();
+		$data->specimen_prepTypePerCollection = $r["specimen_prepTypePerCollection"];
+		$data->specimen_noPrepTypePerCollection = $r["specimen_noPrepTypePerCollection"];
+		$data->specimen_kindOfUnitPerCollection = $r["specimen_kindOfUnitPerCollection"];
+
+		
+		$data->storage_sumPerColl_withIndivCount = $sU->doQuery($sU->getQuery("sumPerColl_withIndivCount"));
+		$data->storage_docCountPerColl_withoutIndivCount = $sU->doQuery($sU->getQuery("docCountPerColl_withoutIndivCount"));
+
+		foreach ($data->storage_docCountPerColl_withoutIndivCount as $key => $val)
+		{
+			$data->storage_docCountPerColl_withoutIndivCount[$key]["mounts"] = $sU->doQuery(sprintf($sU->getQuery("docCountPerColl_withoutIndivCount_mounts"),$val["INST_COLL_SUBCOLL"]));
+		}
+
+		$data->storage_netherlandsCollectionMount = $sU->doQuery($sU->getQuery("docCountPerNetherlandsProvinces"));
+
+		foreach($data->storage_netherlandsCollectionMount as $key=>$val)
+		{
+			$data->storage_netherlandsCollectionMount[$key]["collections"] = $sU->doQuery(sprintf($sU->getQuery("docCountCollectionsPerProvince"),$val["stateProvince"]));
+
+			foreach($data->storage_netherlandsCollectionMount[$key]["collections"] as $sKey => $sVal)
+			{
+				$data->storage_netherlandsCollectionMount[$key]["collections"][$sKey]["mounts"] = 
+					$sU->doQuery(sprintf($sU->getQuery("docCountMountsPerCollectionPerProvince"),$val["stateProvince"],$sVal["INST_COLL_SUBCOLL"]));
+			}
+		}
+
+		$data->storage_catNumberCardinality = $sU->doQuery($sU->getQuery("catNumberCardinality"))[0]["doc_count"];
+
+
+		// calculating provinces
+		$data->specimen_netherlandsCollectionKindOfUnit = $q->nbaGetNetherlandsCollectionKindOfUnit();
+		$data->specimen_netherlandsCollectionPreparationType = $q->nbaGetNetherlandsCollectionPreparationType();
+		$data->specimen_countPerCountryWorld = $q->nbaGetSpecimenCountPerCountryWorld();
+
 		$cache->emptyCache();
 		$cache->storeData( $data );
 	}
 
+	$calculator = new collectionUnitCalculation;
+	$calculator->setStorageSumPerCollWithIndivCount( $data->storage_sumPerColl_withIndivCount );
+	$calculator->setStorageSumPerCollWithoutIndivCount( $data->storage_docCountPerColl_withoutIndivCount );
+	$calculator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection );
+	$calculator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection );
+	$calculator->setSpecimenKindOfUnitPerCollection( $data->specimen_kindOfUnitPerCollection );
 	
-	// callcuating totals
-	$calculator=new collectionUnitCalculation;
-	
-	$calculator->setStorageSumPerCollWithIndivCount( $data->storage_sumPerColl_withIndivCount['collections']['buckets'] );
-	$calculator->setStorageSumPerCollWithoutIndivCount( $data->storage_docCountPerColl_withoutIndivCount['collections']['buckets'] );
-	$calculator->setSpecimenPrepTypePerCollection( $data->specimen_prepTypePerCollection['collections']['buckets'] );
-	$calculator->setSpecimenNoPrepTypePerCollection( $data->specimen_noPrepTypePerCollection['collections']['buckets'] );
-	$calculator->setSpecimenKindOfUnitPerCollection( $data->specimen_kindOfUnitPerCollection['collections']['buckets'] );
-	
+	// not in any database
 	$staticNumbers = [
 		'BrahmsLowerPlants' => [ 'category' => 'Botanie lage planten', 'storageNumber' => 13527, 'average' => 40.30 ],
 		'2D' => [ 'category' => '2D materiaal', 'specimenNumber' => (625500 - 2449), 'average' => 1 ],
@@ -118,6 +176,7 @@
 	}
 	
 	$getAddedStaticNumbers = $calculator->getAddedStaticNumbers();
+
 	
 	// calculating totals
 	$calculator->runCalculations();
@@ -127,16 +186,16 @@
 	$grandUnitsTotal=$calculator->getGrandUnitsTotal();
 	$categoryBuckets=$calculator->getCategoryBuckets();
 
-	// calculating provinces
-	$calculator->setStorageMountPerCollectionPerDutchProvince( $data->storage_netherlandsCollectionMount['provinces']['buckets'] );
-	$calculator->setSpecimenKindOfUnitPerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionKindOfUnit['provinces']['buckets'] );
-	$calculator->setSpecimenPreparationTypePerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionPreparationType['provinces']['buckets'] );
+	// calculating netherlands
+	$calculator->setStorageMountPerCollectionPerDutchProvince( $data->storage_netherlandsCollectionMount );
+	$calculator->setSpecimenKindOfUnitPerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionKindOfUnit );
+	$calculator->setSpecimenPreparationTypePerCollectionPerDutchProvince( $data->specimen_netherlandsCollectionPreparationType );
 	$calculator->calculateDutchProvinceNumbers();
 	$calculator->aggregateDutchProvinceNumbers();
 	$provinces=$calculator->getDutchProvinceNumbers();
 
 	// calculating world
-	$calculator->setSpecimenCountPerCountryWorld( $data->specimen_countPerCountryWorld['country']['buckets'] );
+	$calculator->setSpecimenCountPerCountryWorld( $data->specimen_countPerCountryWorld );
 	$calculator->calculateWorldNumbers();
 	$calculator->sortWorldNumbers( 'doc_count', 'desc' );
 	$world=$calculator->getWorldNumbers();
@@ -182,7 +241,6 @@ var colors=[];
 			<img style='border:1px solid #eee;width:170px;' src='img/3.jpg'>
 		</div>";
 
-
 	$c->makeBlock(
 		[ "cell" => CLASS_TWO_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
@@ -191,56 +249,8 @@ var colors=[];
 		]
 	);
 
-
-	function translateMonth( $month, $ln ) {
-
-		switch ($month) {
-			case 1:
-				return $ln=='en' ? 'January' : 'januari' ;
-				break;
-			case 2:
-				return $ln=='en' ? 'February' : 'februari' ;
-				break;
-			case 3:
-				return $ln=='en' ? 'March' : 'maart' ;
-				break;
-			case 4:
-				return $ln=='en' ? 'April' : 'april' ;
-				break;
-			case 5:
-				return $ln=='en' ? 'May' : 'mei' ;
-				break;
-			case 6:
-				return $ln=='en' ? 'June' : 'juni' ;
-				break;
-			case 7:
-				return $ln=='en' ? 'July' : 'juli' ;
-				break;
-			case 8:
-				return $ln=='en' ? 'August' : 'augustus' ;
-				break;
-			case 9:
-				return $ln=='en' ? 'September' : 'september' ;
-				break;
-			case 10:
-				return $ln=='en' ? 'October' : 'oktober' ;
-				break;
-			case 11:
-				return $ln=='en' ? 'November' : 'november' ;
-				break;
-			case 12:
-				return $ln=='en' ? 'December' : 'december' ;
-				break;
-			default:
-				return $month;
-		}
-	}
-
-
-
 	$w = new webPageStealer;
-
-	$w->setUrl( $nbaServer . '/v2/import-files' );
+	$w->setUrl( config::nbaAddress() . 'import-files' );
 	$w->stealPage();
 
 	$loadInfos = json_decode($w->getPage(),true);
@@ -249,14 +259,14 @@ var colors=[];
 		$str = str_replace(["nsr-","crs-specimens-","col-","brahms-",".tar.gz"], "", $value);
 		if ($key!="col_source_file") {
 			$date = date_parse($str);
-			$loadInfos[$key] = $date["day"] . " " . translateMonth($date["month"],$language) . " " . $date["year"];
+			$loadInfos[$key] = $date["day"] . " " . $translator->translateMonth($date["month"],$language) . " " . $date["year"];
 		}
 		else {
 			$loadInfos[$key] = $str;
 		}
 	}
 
-	$loadInfos["storage_units"] = "22 " . translateMonth(5,$language) . " 2017";
+	$loadInfos["storage_units"] = "22 " . $translator->translateMonth(5,$language) . " 2017";
 
 	$table[] = '<table id="importDates">';
 
@@ -274,7 +284,6 @@ var colors=[];
 	$table[] = '</table>';
 	$table[] = '<!-- import_date: ' . $loadInfos["import_date"] .' -->';
 
-
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple", "info" => "big-simple-central" ],
 		[
@@ -284,7 +293,6 @@ var colors=[];
 	);
 
 	echo $c->getBlockRow();
-	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -293,7 +301,9 @@ var colors=[];
 		[
 			"title" => $translator->translate("Specimen count"), "main" => formatNumber( $grandUnitsTotal ),
 			"subscript" => $translator->translate("specimens"), 
-			"info" => sprintf( $translator->translate( "registered in the Netherlands Biodiversity API as %s specimen records and %s storage units."),formatNumber($data->specimen_totalCount),(formatNumber($data->storage_catNumberCardinality['catalogNumber_count']['value']+$getAddedStaticNumbers['storageNumber']) ) )
+			"info" => sprintf( $translator->translate( "registered in the Netherlands Biodiversity API as %s specimen records and %s storage units."),
+				formatNumber($data->specimen_totalCount),
+				(formatNumber($data->storage_catNumberCardinality+$getAddedStaticNumbers['storageNumber']) ) )
 		]
 	);
 
@@ -333,19 +343,16 @@ var colors=[];
 		[ "title" => $translator->translate("Collection categories by specimen count"), "main" => implode("\n",$buffer) ]
 	);
 	
-
 	echo $c->getBlockRow();	
-
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
 
 	$buffer=[];
 	$buffer[]='<div style="display:inline-block;margin-bottom:-25px;"><table id="taxon_groupByRank" class="data-table" style="width:325px;">';
 
-	foreach((array)$data->taxon_groupByRank['taxon_groupByRank']['buckets'] as $bucket)
+	foreach((array)$data->taxon_groupByRank as $rank => $doc_count)
 	{
-		$buffer[] = '<tr class="data-row"><td class="data-cell">' .  $bucket['key'] . '</td><td class="number">' . formatNumber( $bucket['doc_count'] ) . '</td></tr>';
+		$buffer[] = '<tr class="data-row"><td class="data-cell">' .  $rank . '</td><td class="number">' . formatNumber( $doc_count ) . '</td></tr>';
 	}
 	
 	$buffer[]='</table></div>';
@@ -358,21 +365,20 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
 		[
-			"title" => $translator->translate("Unique scientific names with specimens"), "main" => formatNumber( $data->specimen_acceptedNamesCardinality['fullScientificName']['fullScientificName']['value']  ),
+			"title" => $translator->translate("Unique scientific names with specimens"), "main" => formatNumber( $data->specimen_acceptedNamesCardinality ),
 			"subscript" => $translator->translate("full scientific names"), 
 			"info" => $translator->translate( "Number of unique full scientific names registered as identification for NBA specimen records." ) ]
 	);
 
-
 	$buffer=[];
 	$buffer[]='<h3>'.$translator->translate("Number of unique accepted names").'</h3>';
-	$buffer[]='<h1>'.formatNumber( $data->taxon_acceptedNamesCardinality['acceptedName']['value'] ) . '</h1>';
+	$buffer[]='<h1>'.formatNumber( $data->taxon_acceptedNamesCardinality ) . '</h1>';
         
 	$buffer[]='<h3>'.$translator->translate("Number of unique synonyms").'</h3>';
-	$buffer[]='<h1>' . formatNumber( $data->taxon_synonymCardinality['synonym']['synonym']['value'] ) . '</h1>';
+	$buffer[]='<h1>' . formatNumber( $data->taxon_synonymCardinality ) . '</h1>';
 	
 	$buffer[]='<h3>'.$translator->translate("Number of unique vernacular names").'</h3>';
-	$buffer[]='<h1>'.formatNumber( $data->taxon_vernacularNamesCardinality['vernacularName']['vernacularName']['value'] ) . '</h1>';
+	$buffer[]='<h1>'.formatNumber( $data->taxon_vernacularNamesCardinality ) . '</h1>';
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central", "info" => "simple-central" ],
@@ -383,7 +389,6 @@ var colors=[];
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 	$buffer=[];
 	$buffer[]='<div id="dutchMap1" style="width: 350px; height: 450px;"></div>';
 	
@@ -391,7 +396,6 @@ var colors=[];
 		[ "cell" => CLASS_ONE_THIRD, "main" => "simple-central" ],
 		[ "title" => $translator->translate("Specimens per Dutch province"), "main" => implode("\n", $buffer) ]
 	);
-	
 
 	$buffer=[];
 	$buffer[]='<div style="display:inline-block;margin-bottom:-25px;">';
@@ -465,18 +469,18 @@ var colors=[];
 	$buffer[]='<table class="data-table" style="width:340px;float:left;margin-left:15px;margin-right:25px;">';
 	$i=0;
 
-	$b=array_slice($data->specimen_typeStatusPerCollectionType['collectionType']['buckets'],0,6);
+	$b=array_slice($data->specimen_typeStatusPerCollectionType,0,6);
        
 	$i=0;
 	foreach((array)$b as $collectionType)
 	{
-		$buffer[]='<tr class="main-item"><td colspan="2">'. $translator->translate( $collectionType['key'] ) . ' (<span class="number">' . formatNumber( $collectionType['doc_count'] ) . ' ' . $translator->translate('total') . '</span>)</tr>';
+		$buffer[]='<tr class="main-item"><td colspan="2">'. $translator->translate( $collectionType['collectionType'] ) . ' (<span class="number">' . formatNumber( $collectionType['count'] ) . ' ' . $translator->translate('total') . '</span>)</tr>';
 
-		$bb=array_slice($collectionType['identifications']['typeStatus']['buckets'],0,5);
+		$bb=array_slice($collectionType['values'],0,5);
 
 		foreach((array)$bb as $typeStatus)
 		{
-			$buffer[]='<tr class="sub-item"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectionAndType,$collectionType['key'],$typeStatus['key']).'">' . $typeStatus['key'] . '</a></td><td class="number">' . formatNumber( $typeStatus['doc_count'] ) . '</td></tr>';
+			$buffer[]='<tr class="sub-item"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectionAndType,$collectionType['collectionType'],$typeStatus['identifications.typeStatus']).'">' . $typeStatus['identifications.typeStatus'] . '</a></td><td class="number">' . formatNumber( $typeStatus['count'] ) . '</td></tr>';
 		}
 		
 		$buffer[]='<tr class="no-item"><td colspan="2">&nbsp;</td></tr>';
@@ -494,27 +498,23 @@ var colors=[];
 		[
 			"title" => $translator->translate("Type status records per collection"),
 			"main" => implode("\n", $buffer), 
-			"info" => sprintf( $translator->translate("The %s top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the %s most frequently occurring type statuses in that sub-collection."),	$maxShow_collections, $maxShow_typeStatuses)
+			"info" => sprintf( $translator->translate("The %s top-most sub-collections in terms of the total number of specimens with a type status,<br />plus the %s most frequently occurring type statuses in that sub-collection."), $maxShow_collections, $maxShow_typeStatuses)
 		]
 	);
 
 	echo $c->getBlockRow();
-	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	$maxShow_collectedSpecies=20;
-	$namesToSkip=['Gen. indet. sp. indet.','GEN.INDET. SP.INDET.'];
 	$buffer=[];
 	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
-	$i=0;
-	foreach((array)$data->specimen_perScientificName['fullScientificName']['fullScientificName']['buckets'] as $bucket)
+	$i=1;
+	foreach((array)$data->specimen_perScientificName as $name=>$doc_count)
 	{
-		$name=$bucket['key'];
-		if (in_array($name,$namesToSkip)) continue;
 		if ($i++>$maxShow_collectedSpecies) break;
 		
-		$buffer[]='<tr><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchAdvancedSpecimen,$name).'">' . $name . '</a></td><td class="number">' . formatNumber( $bucket['doc_count'] ) . '</td></tr>';
+		$buffer[]='<tr><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchAdvancedSpecimen,$name).'">' . $name . '</a></td><td class="number">' . formatNumber( $doc_count ) . '</td></tr>';
 	}
 	$buffer[]='</table>';	
 	$c->makeBlock(
@@ -526,23 +526,23 @@ var colors=[];
 		]
 	);
 
+
 	$maxShow_collectors=15;
 	$buffer=[];
 	$buffer[]='<table class="data-table" style="width:90%;float:left;margin-left:15px;margin-right:25px;">';
-	$i=0;
+	$i=1;
 	foreach($data->specimen_collectionTypeCountPerGatherer as $key=>$val)
 	{
-		if (strpos($val['collector'],'Stud bio')===0) continue;
-		if ($i++>=15) break;
+		if ($i++>=$maxShow_collectors) break;
 		
-		if (substr_count($val['collector'],",")==1)
+		if (substr_count($val['gatheringEvent.gatheringPersons.fullName'],",")==1)
 		{
-			$collectorname=explode(", ", $val['collector'], 2);
+			$collectorname=explode(", ", $val['gatheringEvent.gatheringPersons.fullName'], 2);
 			$collectorname=trim($collectorname[1]) . ' ' . trim($collectorname[0]);
 		}
 		else
 		{
-			$collectorname=$val['collector'];
+			$collectorname=$val['gatheringEvent.gatheringPersons.fullName'];
 		}
 		
 		$buffer[]='
@@ -550,16 +550,15 @@ var colors=[];
 				<td colspan="2" onclick="$(\'.list'.$key.'\').toggle();" class="toggle">' . 
 					'<span>' .$collectorname . '</span><br />
 					<span class="list' . $key . ' grey">&#9660;</span>
-					<span class="list' . $key . ' grey invisible">&#9650;</span>					
-					<span class="post-fix">' . sprintf( $translator->translate('%s registered specimen records in %s collection%s'), formatNumber( $val['doc_count'] ), $val['collection_count'] , ($val['collection_count']>1 ? 's' : '') ) . '</span>
+					<span class="list' . $key . ' grey invisible">&#9650;</span>
+					<span class="post-fix">' . sprintf( $translator->translate('%s registered specimen records in %s collection%s'), formatNumber( $val['count'] ), count($val['values']) , (count($val['values'])>1 ? 's' : '') ) . '</span>
 				</td>
 			</tr>';
 
-		foreach((array)$val['collections'] as $key2=>$collection)
+		foreach((array)$val['values'] as $collection)
 		{
-			//if ($key2>=5) break;
-//			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td>' . ucfirst( $translator->translate($collection['collection']) ) . '</td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
-			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectorAndCollection,$collection['collection'],$val['collector']).'">' . ucfirst( $translator->translate($collection['collection']) ). '</a></td><td class="number">' . formatNumber( $collection['doc_count'] ) . '</td></tr>';
+			$buffer[]='<tr class="sub-item invisible list'.$key.'"><td><a href="'.$bpRootUrl . sprintf($urls->bioportalSearchCollectorAndCollection,$collection['collectionType'],
+				$val['gatheringEvent.gatheringPersons.fullName']).'">' . ucfirst( $translator->translate($collection['collectionType']) ). '</a></td><td class="number">' . formatNumber( $collection['count'] ) . '</td></tr>';
 		}
 	}	
 
@@ -587,6 +586,7 @@ var colors=[];
 	$w->replaceElementByXPath( "//div[@class='large-12 main columns']", ["element"=>"div", "attributes"=>["id"=>"dashboard_data"], "content" => $buffer, "html" => true ] );
 	$w->replaceElementById( "naturalis-header" );
 	$w->replaceElementsByTag( "title", ["element"=>"title", "content"=>"BioPortal Dashboard"] );
+
 	echo $w->getNewPage();
 
 ?>	
@@ -697,5 +697,5 @@ $(document).ready(function(e)
 	});
 	
 });
+
 </script>
-	

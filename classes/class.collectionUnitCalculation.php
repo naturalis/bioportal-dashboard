@@ -469,10 +469,10 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 			if ( isset($this->storageMountPerCollectionPerDutchProvince) )
 			{
-				foreach($this->storageMountPerCollectionPerDutchProvince as $province)
+				foreach((array)$this->storageMountPerCollectionPerDutchProvince as $province)
 				{
 					$type='storage';
-					$prov=$this->normalizeProvinceNames($province['key']);
+					$prov=$this->normalizeProvinceNames($province['stateProvince']);
 					$p=$prov['label'];
 
 					if (!isset($this->provinces[$p]))
@@ -484,9 +484,9 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						$this->provinces[$p]['doc_count']=0;
 					}
 
-					foreach($province['collections']['buckets'] as $collection)
+					foreach($province['collections'] as $collection)
 					{
-						$c=$collection['key'];
+						$c=$collection['INST_COLL_SUBCOLL'];
 
 						if (!isset($this->provinces[$p][$c]))
 						{
@@ -494,14 +494,12 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 							$this->provinces[$p]['collections'][$c]['total']=0;
 						}
 
-						foreach($collection['mounts']['buckets'] as $mount)
+						foreach($collection['mounts'] as $mount)
 						{	
-							$m=$this->normalizeMount( $mount['key'] );
+							$m=$this->normalizeMount( $mount['Mount'] );
 							$avg=$this->findCollectionAverage( $c, $type, $m, 'mount' );
 							$tot=($mount['doc_count'] * $avg);
-							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
 							$this->provinces[$p]['collections'][$c]['total']+=$tot;
-							//$this->provinces[$p]['doc_count']+=$mount['doc_count'];
 						}
 					}
 				}
@@ -509,111 +507,71 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 			if ( isset($this->specimenKindOfUnitPerCollectionPerDutchProvince) )
 			{
-				foreach($this->specimenKindOfUnitPerCollectionPerDutchProvince as $province)
-				{
-					$type='specimen';
-					$prov=$this->normalizeProvinceNames($province['key']);
-					$p=$prov['label'];
-
-					if (!isset($this->provinces[$p]))
-					{
-						$this->provinces[$p]=[];
-						$this->provinces[$p]['total']=0;
-						$this->provinces[$p]['code']=$prov['code'];
-						$this->provinces[$p]['valid']=$prov['valid'];
-						$this->provinces[$p]['doc_count']=0;
-					}
-
-					foreach($province['collections']['buckets'] as $collection)
-					{
-						$c=$collection['key'];
-
-						if (!isset($this->provinces[$p][$c]))
-						{
-							$this->provinces[$p]['collections'][$c]=[];
-							$this->provinces[$p]['collections'][$c]['total']=0;
-						}
-						
-						if ($c=='Botany' && $this->provinces[$p]['collections'][$c]['total']==0)
-						{
-							$avg=$this->findCollectionAverage( $c, $type, '_other', 'preparationType' );
-							$tot=($unit['doc_count'] * $avg);
-							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";			
-							$this->provinces[$p]['collections'][$c]['total']=$tot;
-						}
-						else
-						{
-							foreach($collection['kindsOfUnit']['buckets'] as $unit)
-							{	
-								$m=$this->normalizeMount( $unit['key'] );
-								$avg=$this->findCollectionAverage( $c, $type, $m, 'kindOfUnit' );
-								$tot=($unit['doc_count'] * $avg);
-								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
-								$this->provinces[$p]['collections'][$c]['total']+=$tot;
-								$this->provinces[$p]['doc_count']+=$unit['doc_count'];
-							}		
-						}
-					}
-				}
+				$this->specimenThirdBucketPerCollectionPerDutchProvince( $this->specimenKindOfUnitPerCollectionPerDutchProvince, 'kindOfUnit' );
 			}
 
 			if ( isset($this->specimenPreparationTypePerCollectionPerDutchProvince) )
 			{
-				foreach($this->specimenPreparationTypePerCollectionPerDutchProvince as $province)
-				{
-					$type='specimen';
-					$prov=$this->normalizeProvinceNames($province['key']);
-					$p=$prov['label'];
-
-					if (!isset($this->provinces[$p]))
-					{
-						$this->provinces[$p]=[];
-						$this->provinces[$p]['total']=0;
-						$this->provinces[$p]['code']=$prov['code'];
-						$this->provinces[$p]['valid']=$prov['valid'];
-						$this->provinces[$p]['doc_count']=0;
-					}
-
-					foreach($province['collections']['buckets'] as $collection)
-					{
-						$c=$collection['key'];
-
-						if (!isset($this->provinces[$p][$c]))
-						{
-							$this->provinces[$p]['collections'][$c]=[];
-							$this->provinces[$p]['collections'][$c]['total']=0;
-						}
-
-						if ($c=='Botany' && $this->provinces[$p]['collections'][$c]['total']==0)
-						{
-							$avg=$this->findCollectionAverage( $c, $type, '_other', 'preparationType' );
-							$tot=($unit['doc_count'] * $avg);
-							//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";			
-							$this->provinces[$p]['collections'][$c]['total']=$tot;
-							$this->provinces[$p]['doc_count']+=$unit['doc_count'];
-						}
-						else
-						{
-							foreach($collection['preparationTypes']['buckets'] as $unit)
-							{	
-								//$m=this->normalizeMount( $unit['key'] );
-								$m=$unit['key'];
-								$avg=$this->findCollectionAverage( $c, $type, $m, 'preparationType' );
-								$tot=($unit['doc_count'] * $avg);
-								//echo "==",$p,":",$c,":",$m,":",$tot,"<br />";				
-								$this->provinces[$p]['collections'][$c]['total']+=$tot;
-								$this->provinces[$p]['doc_count']+=$unit['doc_count'];
-							}		
-						}
-					}
-				}
+				$this->specimenThirdBucketPerCollectionPerDutchProvince( $this->specimenPreparationTypePerCollectionPerDutchProvince, 'preparationType' );
 			}
 			
 			foreach($this->provinces as $province=>$collections)
 			{
+
+
 				foreach($collections['collections'] as $collection=>$numbers)
 				{
 					$this->provinces[$province]['total']+=$numbers['total'];
+				}
+			}
+		}
+
+		private function specimenThirdBucketPerCollectionPerDutchProvince( $dataArray, $thirdBucket )
+		{
+			foreach($dataArray as $province)
+			{
+
+				$type='specimen';
+				$prov=$this->normalizeProvinceNames($province['gatheringEvent.provinceState']);
+				$p=$prov['label'];
+
+				if (!isset($this->provinces[$p]))
+				{
+					$this->provinces[$p]=[];
+					$this->provinces[$p]['total']=0;
+					$this->provinces[$p]['code']=$prov['code'];
+					$this->provinces[$p]['valid']=$prov['valid'];
+					$this->provinces[$p]['doc_count']=0;
+				}
+
+				foreach($province['values'] as $collection)
+				{
+					$c=$collection['collectionType'];
+
+					if (!isset($this->provinces[$p][$c]))
+					{
+						$this->provinces[$p]['collections'][$c]=[];
+						$this->provinces[$p]['collections'][$c]['total']=0;
+					}
+					
+					if ($c=='Botany' && $this->provinces[$p]['collections'][$c]['total']==0)
+					{
+						$avg=$this->findCollectionAverage( $c, $type, '_other', $thirdBucket );
+						// $tot=($unit['doc_count'] * $avg); // orogonal code - ? never worked ?
+						$tot=($collection['count'] * $avg);
+						$this->provinces[$p]['collections'][$c]['total']=$tot;
+					}
+					else
+					{
+						foreach($collection[$thirdBucket] as $unit)
+						{	
+							$m=$this->normalizeMount( $unit[$thirdBucket] );
+							$avg=$this->findCollectionAverage( $c, $type, $m, $thirdBucket );
+							$tot=($unit['count'] * $avg);
+							$this->provinces[$p]['collections'][$c]['total']+=$tot;
+							$this->provinces[$p]['doc_count']+=$unit['count'];
+						}		
+					}
 				}
 			}
 		}
@@ -681,35 +639,32 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			
 			return $this->provinces;
 		}
-
 		
 		public function calculateStorageRecordsWithIndividualCount()
 		{
 			// storage units that have an actual individualCount
-			foreach($this->storage_sumPerColl_withIndivCount as $collection)
+			foreach((array)$this->storage_sumPerColl_withIndivCount as $key => $collection)
 			{
-				foreach($this->mapping2016ReportCategoryToCollection as $category=>$collections)
+				foreach((array)$this->mapping2016ReportCategoryToCollection as $category=>$collections)
 				{
 					if ( !isset($collections['mapping']) )
 						continue;
-					
-					if (in_array(strtolower($collection['key']),$collections['mapping']))
+
+					if (in_array(strtolower($collection['INST_COLL_SUBCOLL']),$collections['mapping']))
 					{
 						$this->collectionUnitEstimates[$category]['storageRecordsWithIndividualCount_number']+=$collection['doc_count'];
-						$this->collectionUnitEstimates[$category]['storageRecordsWithIndividualCount_sum']+=$collection['indiv_count']['value'];
+						$this->collectionUnitEstimates[$category]['storageRecordsWithIndividualCount_sum']+=$collection['indiv_count'];
 						break;
 					}
 				}
 			}
-
-			//q( $this->collectionUnitEstimates,1);
 		}			
 		
 		public function calculateStorageRecordsWithoutIndividualCount()
 		{
-			foreach($this->storage_docCountPerColl_withoutIndivCount as $collection=>$mounts)
+			foreach((array)$this->storage_docCountPerColl_withoutIndivCount as $collection=>$mounts)
 			{
-				foreach($this->mapping2016ReportCategoryToCollection as $category=>$collections)
+				foreach((array)$this->mapping2016ReportCategoryToCollection as $category=>$collections)
 				{
 					if ( !isset($collections['mapping']) )
 						continue;
@@ -721,6 +676,7 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 						foreach($mounts as $mount=>$value)
 						{
 							$product=0;
+
 							if (!isset($collections['collectionEstimatesStorageUnits'][$mount]))
 							{
 								if (!isset($collections['collectionEstimatesStorageUnits']["_other"]))
@@ -745,73 +701,64 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 					}
 				}
 			}
-
-			//q( $this->collectionUnitEstimates ,1 );			
 		}
 		
 		public function normalizeSpecimenPreparationTypes()
 		{
 			$this->normalizedSpecimen=[];
-			foreach( (array)$this->specimen_prepTypePerCollection as $bucket )
+
+			foreach( (array)$this->specimen_prepTypePerCollection as $collection => $buckets )
 			{
-				$d = $this->getPrepTypeKeyByCollection($bucket['key']);
+				$d = $this->getPrepTypeKeyByCollection($collection);
 				if (!is_null($d) && $d!='preparationType')
 					continue;
 				
-				$this->normalizedSpecimen[$bucket['key']]=[];
-				if (isset($bucket['prepTypes']))
+				$this->normalizedSpecimen[$collection]=[];
+				$boxes=$drawers=0;
+				foreach( (array)$buckets as $prepType => $doc_count )
 				{
-					$boxes=$drawers=0;
-					foreach( $bucket['prepTypes']['buckets'] as $subBucket )
+					$b=strtolower($prepType);
+					if (!isset($this->normalizedSpecimen[$collection][$b]))
 					{
-						$b=strtolower($subBucket['key']);
-						if (!isset($this->normalizedSpecimen[$bucket['key']][$b]))
-						{
-							$this->normalizedSpecimen[$bucket['key']][$b]=(int)$subBucket['doc_count'];
-						}
-						else
-						{
-							$this->normalizedSpecimen[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
-						}
+						$this->normalizedSpecimen[$collection][$b]=(int)$doc_count;
 					}
-						
+					else
+					{
+						$this->normalizedSpecimen[$collection][$b]+=(int)$doc_count;
+					}
 				}
 			}
 
 			if (!is_null($this->specimen_noPrepTypePerCollection)) 
 			{
-				foreach( (array)$this->specimen_noPrepTypePerCollection as $bucket )
+				foreach( (array)$this->specimen_noPrepTypePerCollection as $collection => $doc_count )
 				{
-					if (!isset($this->normalizedSpecimen[$bucket['key']])) $this->normalizedSpecimen[$bucket['key']]=[];
-					$this->normalizedSpecimen[$bucket['key']]['_other']=(int)$bucket['doc_count'];
+					if (!isset($this->normalizedSpecimen[$collection])) $this->normalizedSpecimen[$collection]=[];
+					$this->normalizedSpecimen[$collection]['_other']=(int)$doc_count;
 				}
 			}
 
-			foreach( (array)$this->specimen_kindOfUnitPerCollection as $bucket )
+			foreach( (array)$this->specimen_kindOfUnitPerCollection as $collection => $buckets )
 			{
-				$d = $this->getPrepTypeKeyByCollection($bucket['key']);
+				$d = $this->getPrepTypeKeyByCollection($collection);
 				if (is_null($d) || (!is_null($d) && $d!='kindOfUnit'))
 					continue;
 
-				$this->normalizedSpecimen[$bucket['key']]=[];
-				if (isset($bucket['kindsOfUnit']))
+				$this->normalizedSpecimen[$collection]=[];
+				$boxes=$drawers=0;
+				foreach( (array)$buckets as $kindOfUnit => $doc_count )
 				{
-					$boxes=$drawers=0;
-					foreach( $bucket['kindsOfUnit']['buckets'] as $subBucket )
+					$b=strtolower($kindOfUnit);
+					if (!isset($this->normalizedSpecimen[$collection][$b]))
 					{
-						$b=strtolower($subBucket['key']);
-						if (!isset($this->normalizedSpecimen[$bucket['key']][$b]))
-						{
-							$this->normalizedSpecimen[$bucket['key']][$b]=(int)$subBucket['doc_count'];
-						}
-						else
-						{
-							$this->normalizedSpecimen[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
-						}
+						$this->normalizedSpecimen[$collection][$b]=(int)$doc_count;
+					}
+					else
+					{
+						$this->normalizedSpecimen[$collection][$b]+=(int)$doc_count;
 					}
 				}
 			}			
-			
 		}
 
 		public function addStaticNumbers( $p )
@@ -860,7 +807,10 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 					if (in_array(strtolower($collection),$collections['mapping']))
 					{
-						if ( $category == 'entomologie' ) continue; // these overlap with the (more complete) storage units
+						if ( $category == 'entomologie' )
+						{
+							continue; // these overlap with the (more complete) storage units
+						}
 			
 						foreach( $prepTypes as $prepType=>$doc_count ) 
 						{
@@ -1113,7 +1063,6 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 			return $this->addedStaticNumbers;
 		}
 
-
 		private function initSumObject()
 		{
 			return [
@@ -1141,41 +1090,36 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 		private function normalizeStorageMounts()
 		{
 			$storageDocCountPerCollWithoutIndivCount=[];
-			foreach(  $this->storage_docCountPerColl_withoutIndivCount as $bucket )
+			foreach(  $this->storage_docCountPerColl_withoutIndivCount as $collection )
 			{
-				//echo $bucket['key']," : ",$bucket['doc_count'], "\n";
-				$storageDocCountPerCollWithoutIndivCount[$bucket['key']]=[];
-				if (isset($bucket['sum_count']))
+				$storageDocCountPerCollWithoutIndivCount[$collection["INST_COLL_SUBCOLL"]]=[];
+				$boxes=$drawers=0;
+				foreach(  $collection["mounts"] as $bucket )
 				{
-					$boxes=$drawers=0;
-					foreach( $bucket['sum_count']['buckets'] as $subBucket )
+					if (stripos($bucket['Mount'],"box")!==false)
 					{
-						//echo " -- " ,$subBucket['key']," : ",$subBucket['doc_count'], "\n";
-						if (stripos($subBucket['key'],"box")!==false)
+						$boxes+=(int)$bucket['doc_count'];
+					}
+					else
+					if (stripos($bucket['Mount'],"drawer")!==false)
+					{
+						$drawers+=(int)$bucket['doc_count'];
+					}
+					else
+					{
+						$b=strtolower($bucket['Mount']);
+						if (!isset($storageDocCountPerCollWithoutIndivCount[$b]["box"]))
 						{
-							$boxes+=(int)$subBucket['doc_count'];
+							$storageDocCountPerCollWithoutIndivCount[$collection["INST_COLL_SUBCOLL"]][$b]=(int)$bucket['doc_count'];
 						}
 						else
-						if (stripos($subBucket['key'],"drawer")!==false)
 						{
-							$drawers+=(int)$subBucket['doc_count'];
-						}
-						else
-						{
-							$b=strtolower($subBucket['key']);
-							if (!isset($storageDocCountPerCollWithoutIndivCount[$b]["box"]))
-							{
-								$storageDocCountPerCollWithoutIndivCount[$bucket['key']][$b]=(int)$subBucket['doc_count'];
-							}
-							else
-							{
-								$storageDocCountPerCollWithoutIndivCount[$bucket['key']][$b]+=(int)$subBucket['doc_count'];
-							}
+							$storageDocCountPerCollWithoutIndivCount[$collection["INST_COLL_SUBCOLL"]][$b]+=(int)$bucket['doc_count'];
 						}
 					}
+					$storageDocCountPerCollWithoutIndivCount[$collection["INST_COLL_SUBCOLL"]]["box"]=$boxes;
+					$storageDocCountPerCollWithoutIndivCount[$collection["INST_COLL_SUBCOLL"]]["drawer"]=$drawers;
 				}
-				$storageDocCountPerCollWithoutIndivCount[$bucket['key']]["box"]=$boxes;
-				$storageDocCountPerCollWithoutIndivCount[$bucket['key']]["drawer"]=$drawers;
 			}
 			
 			$this->storage_docCountPerColl_withoutIndivCount = $storageDocCountPerCollWithoutIndivCount; 
@@ -1207,19 +1151,19 @@ beheereenheden = specimen (wel tellen, 1 als niet gedefinieerd) -> OOK MEE NEMEN
 
 		private function countriesToIso3166()
 		{
-			foreach($this->specimenCountPerCountryWorld as $key=>$bucket)
+			foreach($this->specimenCountPerCountryWorld as $country=>$doc_count)
 			{
-				$b=strtolower($bucket['key']);
+				$b=strtolower($country);
 				if(isset($this->iso3166[$b]))
 				{
 					$code=$this->iso3166[$b];
 					if (isset($this->iso3166DocCount[$code]))
 					{
-						$this->iso3166DocCount[$code]['doc_count']+=$bucket['doc_count'];
+						$this->iso3166DocCount[$code]['doc_count']+=$doc_count;
 					}
 					else
 					{
-						$this->iso3166DocCount[$code]['doc_count']=$bucket['doc_count'];
+						$this->iso3166DocCount[$code]['doc_count']=$doc_count;
 						$this->iso3166DocCount[$code]['label']=$this->iso3166DocCount[$code]['iso_code']=$code;
 					}
 				}

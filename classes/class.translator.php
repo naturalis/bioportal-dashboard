@@ -104,5 +104,51 @@
 				'Paleontology Invertebrates' => [ 'nl' => 'Paleontologie invertebraten' ],
 			];
 		}
+
+		public function translateMonth( $month, $ln )
+		{
+			switch ($month) {
+				case 1:
+					return $ln=='en' ? 'January' : 'januari' ;
+					break;
+				case 2:
+					return $ln=='en' ? 'February' : 'februari' ;
+					break;
+				case 3:
+					return $ln=='en' ? 'March' : 'maart' ;
+					break;
+				case 4:
+					return $ln=='en' ? 'April' : 'april' ;
+					break;
+				case 5:
+					return $ln=='en' ? 'May' : 'mei' ;
+					break;
+				case 6:
+					return $ln=='en' ? 'June' : 'juni' ;
+					break;
+				case 7:
+					return $ln=='en' ? 'July' : 'juli' ;
+					break;
+				case 8:
+					return $ln=='en' ? 'August' : 'augustus' ;
+					break;
+				case 9:
+					return $ln=='en' ? 'September' : 'september' ;
+					break;
+				case 10:
+					return $ln=='en' ? 'October' : 'oktober' ;
+					break;
+				case 11:
+					return $ln=='en' ? 'November' : 'november' ;
+					break;
+				case 12:
+					return $ln=='en' ? 'December' : 'december' ;
+					break;
+				default:
+					return $month;
+			}
+		}
+
+
 		
 	}
