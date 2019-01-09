@@ -74,6 +74,7 @@
 		$q = new nbaQueries( $n );
 
 		$sU = new storageUnits( config::storageUnitDbPath() );
+		$sU->setDbParams( $dbAccess );
 
 		$q->setLowerRanks( [ "species", "subspecies", "subsp", "ssp." ] ); // [ "species", "subspecies", "var.", "subsp", "forma", "cv.", "f.", "subvar."]
 		$q->setIgnorableFullScientificNames( [ "Gen. indet. sp. indet.","GEN.INDET. SP.INDET."] );

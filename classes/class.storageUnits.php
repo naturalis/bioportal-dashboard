@@ -6,26 +6,51 @@
 		private $db;
 		private $queries;
 
-		public function __construct($file)
+		public function __construct() 
 		{
-			if (!file_exists($file))
-			{
-				throw new Exception(sprint("database file %s doesn't exist",$file), 1);
-			}
-			$this->dbfile = $file;
-			$this->db = new SQLite3($this->dbfile);
+			$this->db = new stdClass;
 			$this->setQueries();
 			$this->setDutchlands();
+		}
+		
+		public function setDbParams( $hostOrObject, $user=null, $password=null, $database=null )
+		{
+			if ( is_object($hostOrObject) )
+			{
+				$this->_setDbParams( $hostOrObject->host, $hostOrObject->user, $hostOrObject->password, $hostOrObject->database );
+			}
+			else
+			if ( is_array($hostOrObject) )
+			{
+				$this->_setDbParams( $hostOrObject['host'], $hostOrObject['user'], $hostOrObject['password'], $hostOrObject['database'] );
+			}
+			else
+			{
+				$this->_setDbParams( $hostOrObject, $user, $password, $database );
+			}
+		}
+
+		public function connectDb()
+		{
+			if (!isset($this->db->connection))
+			{
+				$this->db->connection = mysqli_connect($this->db->host,$this->db->user,$this->db->password,$this->db->database);
+			}
 		}
 
 		public function doQuery($query)
 		{
 			$r=[];
-			$results = $this->db->query($query);
-			while ($row = $results->fetchArray(SQLITE3_ASSOC))
+
+			if ($result = mysqli_query($this->db->connection,$query))
 			{
-			    $r[]=$row;
+				while ($row=mysqli_fetch_assoc($result))
+				{
+					$r[]=$row;
+				}    
+				mysqli_free_result($result);
 			}
+
 			return $r;
 		}
 
@@ -119,4 +144,11 @@
 			$this->queries->catNumberCardinality = "select count(distinct catalogNumber) as doc_count from storageunits";		
 		}
 
+		private function _setDbParams( $host, $user, $password, $database )
+		{
+			$this->db->host=$host;
+			$this->db->user=$user;
+			$this->db->password=$password;
+			$this->db->database=$database;
+		}
 	}
