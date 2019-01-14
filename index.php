@@ -77,13 +77,12 @@
 		$sU->setDbParams( $dbAccess );
 		$sU->connectDb();
 
-		$q->setLowerRanks( [ "species", "subspecies", "subsp", "ssp." ] ); // [ "species", "subspecies", "var.", "subsp", "forma", "cv.", "f.", "subvar."]
-		$q->setIgnorableFullScientificNames( [ "Gen. indet. sp. indet.","GEN.INDET. SP.INDET."] );
-		$q->setIgnorableCollectors( [ "Unknown", "Unreadable", "Stud bio" ] );
-		$q->setSourceSystems( "specimen", ["BRAHMS","CRS"] );
-		$q->setSourceSystems( "taxon", ["COL","NSR"] );
-		$q->setSourceSystems( "multimedia", ["BRAHMS","CRS","NSR"] );
-
+		$q->setLowerRanks( config::lowerRanks() );
+		$q->setIgnorableFullScientificNames( config::ignorableFullScientificNames() );
+		$q->setIgnorableCollectors( config::ignorableCollectors() );
+		$q->setSourceSystems( "specimen", config::sourceSystemsSpecimen() );
+		$q->setSourceSystems( "taxon", config::sourceSystemsTaxon() );
+		$q->setSourceSystems( "multimedia", config::sourceSystemsMultimedia() );
 		$q->setDutchlands($sU->getDutchlands(false));
 
 		$r = $q->nbaGetSpecimenOverview();
