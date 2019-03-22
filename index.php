@@ -151,7 +151,7 @@
 	// not in any database
 	$staticNumbers = [
 		'BrahmsLowerPlants' => [ 'category' => 'Botanie lage planten', 'storageNumber' => 13527, 'average' => 40.30 ],
-		'2D' => [ 'category' => '2D materiaal', 'specimenNumber' => (625500 - 2449), 'average' => 1 ],
+		'2D' => [ 'category' => '2D materiaal', 'specimenNumber' => (625500 - 2449), 'average' => 1 ], // 2019.03.22: voor actuele minus-waarde: https://api.biodiversitydata.nl/v2/specimen/count/?collectionType=Arts
 		// 'PiscesLegacy' => [ 'category' => 'Vertebraten vissen', 'specimenNumber' => 116000, 'average' => 1 ], // 2019.01.10: zijn inmiddels geimporteerd (dixit marian)
 		// 'StonesLegacy' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 100000, 'average' => 1 ], // 2019.01.10: zijn inmiddels geimporteerd (dixit marian)
 		'StonesNBADiscarded' => [ 'category' => 'Mineralogie en petrologie', 'specimenNumber' => 199000, 'average' => 1 ], // should be 'thin section'
