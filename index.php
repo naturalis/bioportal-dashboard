@@ -271,12 +271,23 @@ var colors=[];
 
 	$table[] = '<table id="importDates">';
 
+#	foreach ([
+#		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],
+#		"Naturalis Zoology and Geology catalogues" => $loadInfos["crs_specimens_sourcefile"],
+#		"Naturalis storage units" => $loadInfos["storage_units"],
+#		"Catalogue of Life" => $loadInfos["col_source_file"],
+#		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
+#		// "Xeno-canto" => $loadInfos["xc_specimens_sourcefile"],
+#	] as $key => $val) {
+#		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
+#	}
+
 	foreach ([
-		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],
-		"Naturalis Zoology and Geology catalogues" => $loadInfos["crs_specimens_sourcefile"],
+		"Naturalis Botany catalogues" => "04-07-2019",
+		"Naturalis Zoology and Geology catalogues" => "23-08-2019",
 		"Naturalis storage units" => $loadInfos["storage_units"],
-		"Catalogue of Life" => $loadInfos["col_source_file"],
-		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
+		"Catalogue of Life" => "2019",
+		"Nederlands Soortenregister" => "03-10-2019",
 		// "Xeno-canto" => $loadInfos["xc_specimens_sourcefile"],
 	] as $key => $val) {
 		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
