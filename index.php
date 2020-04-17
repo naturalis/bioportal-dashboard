@@ -256,39 +256,40 @@ var colors=[];
 
 	$loadInfos = json_decode($w->getPage(),true);
 
-	foreach ($loadInfos as $key => $value) {
-		$str = str_replace(["nsr-","crs-specimens-","col-","brahms-",".tar.gz"], "", $value);
-		if ($key!="col_source_file") {
-			$date = date_parse($str);
-			$loadInfos[$key] = $date["day"] . " " . $translator->translateMonth($date["month"],$language) . " " . $date["year"];
-		}
-		else {
-			$loadInfos[$key] = $str;
-		}
+	// foreach ($loadInfos as $key => $value)
+	// {
+	// 	$str = str_replace(["nsr-","crs-specimens-","col-","brahms-",".tar.gz"], "", $value);
+	// 	if ($key!="col_source_file") {
+	// 		$date = date_parse($str);
+	// 		$loadInfos[$key] = $date["day"] . " " . $translator->translateMonth($date["month"],$language) . " " . $date["year"];
+	// 	}
+	// 	else {
+	// 		$loadInfos[$key] = $str;
+	// 	}
+	// }
+
+	function reformatDate($date)
+	{
+		$t=explode("-",$date);
+		return implode("-",[$t[2],$t[1],$t[0]]);
 	}
 
-	$loadInfos["storage_units"] = "22 " . $translator->translateMonth(5,$language) . " 2017";
+	// reformatDate($loadInfos["crs_multimediaobject"]["harvest_date"]);
+	// reformatDate($loadInfos["xc_multimediaobject"]["harvest_date"]);
+	// reformatDate($loadInfos["obs_specimen"]["harvest_date"]);
+	// reformatDate($loadInfos["xc_specimen"]["harvest_date"]);
+	// reformatDate($loadInfos["brahms_multimediaobject"]["harvest_date"]);
+	// reformatDate($loadInfos["nsr_multimediaobject"]["harvest_date"]);
+	// reformatDate($loadInfos["geo_geoarea"]["harvest_date"]);
 
 	$table[] = '<table id="importDates">';
 
-#	foreach ([
-#		"Naturalis Botany catalogues" => $loadInfos["brahms_sourcefile"],
-#		"Naturalis Zoology and Geology catalogues" => $loadInfos["crs_specimens_sourcefile"],
-#		"Naturalis storage units" => $loadInfos["storage_units"],
-#		"Catalogue of Life" => $loadInfos["col_source_file"],
-#		"Nederlands Soortenregister" => $loadInfos["nsr_source_file"],
-#		// "Xeno-canto" => $loadInfos["xc_specimens_sourcefile"],
-#	] as $key => $val) {
-#		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
-#	}
-
 	foreach ([
-		"Naturalis Botany catalogues" => "04-07-2019",
-		"Naturalis Zoology and Geology catalogues" => "23-08-2019",
-		"Naturalis storage units" => $loadInfos["storage_units"],
-		"Catalogue of Life" => "2019",
-		"Nederlands Soortenregister" => "03-10-2019",
-		// "Xeno-canto" => $loadInfos["xc_specimens_sourcefile"],
+		"Naturalis Botany catalogues" => reformatDate($loadInfos["brahms_specimen"]["harvest_date"]),
+		"Naturalis Zoology and Geology catalogues" => reformatDate($loadInfos["crs_specimen"]["harvest_date"]),
+		"Naturalis storage units" => "22-05-2017",
+		"Catalogue of Life" => reformatDate($loadInfos["col_taxon"]["harvest_date"]),
+		"Nederlands Soortenregister" => reformatDate($loadInfos["nsr_taxon"]["harvest_date"]),
 	] as $key => $val) {
 		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
 	}
