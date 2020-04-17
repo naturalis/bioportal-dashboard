@@ -66,7 +66,7 @@
 				'full scientific names' => [ 'nl' => 'wetenschappelijke namen' ],
 				'Hogere planten' => [ 'en' => 'Higher plants' ],
 				'Lagere planten' => [ 'en' => 'Lower plants' ],
-				'Last import dates' => [ 'en' => 'Exportdatums', 'nl' => 'Export dates' ],
+				'Last import dates' => [ 'nl' => 'Exportdatums', 'en' => 'Export dates' ],
 				'Mineralogie en petrologie' => [ 'en' => 'Mineralogy and petrology' ],
 				'Most collected (sub)species' => [ 'nl' => 'Meest verzamelde (onder)soorten' ],
 				'Multimedia count' => [ 'nl' => 'Totaal aantal multimedia records' ],
