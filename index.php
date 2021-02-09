@@ -290,6 +290,7 @@ var colors=[];
 		"Naturalis storage units" => "22-05-2017",
 		// "Catalogue of Life" => reformatDate($loadInfos["col_taxon"]["harvest_date"]),
 		"Nederlands Soortenregister" => reformatDate($loadInfos["nsr_taxon"]["harvest_date"]),
+		"Dutch Caribbean Species Register" => reformatDate($loadInfos["dcsr_taxon"]["harvest_date"]),
 	] as $key => $val) {
 		$table[] = '<tr><th>' . $key . '</td><td>' . $val . '</td></tr>';
 	}
