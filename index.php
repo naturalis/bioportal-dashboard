@@ -328,7 +328,7 @@ var colors=[];
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => $translator->translate("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => $translator->translate("multimedia records"), "info" => $translator->translate("registered in the Netherlands Biodiversity API, consisting of  specimen images from the collection and taxon photo's from Dutch Species Register.") ]
+		[ "title" => $translator->translate("Multimedia count"), "main" => formatNumber($data->multimedia_totalCount), "subscript" => $translator->translate("multimedia records"), "info" => $translator->translate("total_multimedia_subscript") ]
 	);
 
 	echo $c->getBlockRow();
