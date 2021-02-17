@@ -466,7 +466,7 @@ var colors=[];
 	$c->makeBlock(
 		[ "cell" => CLASS_FULL, "main" => "simple-central", "info" => "normal-central" ],
 		[
-			"title" => $translator->translate("Registered specimen records per country (without The Netherlands)"),
+			"title" => $translator->translate("specimens_per_country_without_nl"),
 			"main" => implode("\n", $buffer), 
 			"info" => ""
 		]
