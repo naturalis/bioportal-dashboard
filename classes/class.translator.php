@@ -81,7 +81,7 @@
 				'Paleontologie' => [ 'en' => 'Paleontology '],
 				'registered in the Netherlands Biodiversity API as %s specimen records and %s storage units.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API als %s specimen records en %s bewaareenheden.' ],
 				'registered in the Netherlands Biodiversity API, consisting of  specimen images from the collection and taxon photo\'s from Dutch Species Register.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API, samengesteld uit specimenafbeeldingen uit de collectie en soortfoto\'s uit het Nederlands Soortenregister.' ],
-				'registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API, afkomstig uit de Catalogue of Life en het Nederlands Soortenregister.' ],
+				'registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life, the Dutch Species Register, and the Dutch Caribbean Species Register.' => [ 'nl' => 'geregistreerd in de Netherlands Biodiversity API, afkomstig uit de Catalogue of Life, het Nederlands Soortenregister en het Dutch Caribbean Species Register.' ],
 				'Registered specimen records per country (excluding The Netherlands)' => [ 'nl' => 'Geregistreerde specimen records per land (zonder Nederland)' ],
 				'Reptielen en amfibieën' => [ 'nl' => 'Reptielen en amfibie&euml;n', 'en' => 'Reptiles and amphibians' ],
 				'Specimen count' => [ 'nl' => 'Totaal aantal specimens' ],
