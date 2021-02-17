@@ -323,7 +323,7 @@ var colors=[];
 
 	$c->makeBlock(
 		[ "cell" => CLASS_ONE_THIRD, "main" => "big-simple-central", "info" => "big-simple-central" ],
-		[ "title" => $translator->translate("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => $translator->translate("taxa"), "info" => $translator->translate("registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life and the Dutch Species Register.") ]
+		[ "title" => $translator->translate("Taxon count"), "main" => formatNumber($data->taxon_totalCount), "subscript" => $translator->translate("taxa"), "info" => $translator->translate("registered in the Netherlands Biodiversity API, sourced from the Catalogue of Life, the Dutch Species Register, and the Dutch Caribbean Species Register.") ]
 	);
 
 	$c->makeBlock(
